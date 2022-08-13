@@ -231,17 +231,29 @@ body {
     color: white !important;
 
 }
-
-.categoriesDataMain {
-    width: 100%;
-    display: none;
+#custom_rooms{
+    scroll-snap-type: x mandatory;
+    display: flex;
+    flex-direction: row;
+    overflow-y: hidden;
+    overflow-x: auto;
+    width:100%;
     height: 100%;
+}
+.categoriesDataMain {
+    min-width: 100%;
+    width: 100%;
+    /* display: none; */
+    scroll-snap-align: center;
+    max-height: 100%;
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-stop: always;
     flex-flow: row wrap;
     justify-content: center;
-    /* align-items: center; */
 }
 
-.active {
+.active{
     display: flex !important;
 }
 

@@ -746,6 +746,37 @@ function updateRoomAdd() {
 
 }
 
+let scrollLastIndex;
+let tempCatDOM = document.getElementsByClassName("categories");
+let cusRoomDOM = document.getElementById("custom_rooms");
+cusRoomDOM.addEventListener("scroll", function(){
+    let unRoundedIndex = cusRoomDOM.scrollLeft / cusRoomDOM.offsetWidth;
+    let index = Math.round(unRoundedIndex);
+
+    if(index != scrollLastIndex){
+        for (let i = 0; i < tempCatDOM.length; i++) {
+            if (i == index) {
+                tempCatDOM[i].classList.add("activeCat");
+                tempCatDOM[i].scrollIntoView();
+            } else {
+                tempCatDOM[i].classList.remove("activeCat");
+            }
+        }
+
+        let activeCatDOM = document.querySelector(".categories.activeCat");
+        let temp = document.getElementById("catActiveMain");
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+                if (temp && activeCatDOM) {
+                    temp.style.left = activeCatDOM.offsetLeft;
+                    temp.style.height = activeCatDOM.offsetHeight;
+                    temp.style.width = activeCatDOM.offsetWidth;
+                }
+            });
+        });
+    }
+    scrollLastIndex = index;
+}, {"passive" : true});
 function addCustomRoom() {
 
     rooms2 = rooms.slice(0);
@@ -769,40 +800,43 @@ function addCustomRoom() {
                     localStorage.setItem("currentCategory", thisDataId);
 
 
-                    let tempCat = document.getElementsByClassName("categories");
-                    for (let i = 0; i < tempCat.length; i++) {
-                        if (this == tempCat[i]) {
-                            tempCat[i].classList.add("activeCat");
-                        } else {
-                            tempCat[i].classList.remove("activeCat");
-                        }
+                    // let tempCat = document.getElementsByClassName("categories");
+                    // for (let i = 0; i < tempCat.length; i++) {
+                    //     if (this == tempCat[i]) {
+                    //         tempCat[i].classList.add("activeCat");
+                    //     } else {
+                    //         tempCat[i].classList.remove("activeCat");
+                    //     }
 
 
-                    }
+                    // }
 
 
                     let activeCatDOM = document.querySelector(".categories.activeCat");
                     let temp = document.getElementById("catActiveMain");
                     window.requestAnimationFrame(function () {
                         window.requestAnimationFrame(function () {
-                            if (temp && activeCatDOM) {
-                                temp.style.left = activeCatDOM.offsetLeft;
-                                temp.style.height = activeCatDOM.offsetHeight;
-                                temp.style.width = activeCatDOM.offsetWidth;
-                            }
+                            // if (temp && activeCatDOM) {
+                            //     temp.style.left = activeCatDOM.offsetLeft;
+                            //     temp.style.height = activeCatDOM.offsetHeight;
+                            //     temp.style.width = activeCatDOM.offsetWidth;
+                            // }
 
-                            setTimeout(function () {
-                                let tempCatData = document.getElementsByClassName("categoriesDataMain");
-                                for (let i = 0; i < tempCatData.length; i++) {
-                                    if (tempCatData[i].id == thisDataId) {
-                                        tempCatData[i].classList.add("active");
+                            let tempCatData = document.getElementsByClassName("categoriesDataMain");
+                            for (let i = 0; i < tempCatData.length; i++) {
+                                if (tempCatData[i].id == thisDataId) {
+                                    tempCatData[i].classList.add("active");
+                                    window.requestAnimationFrame(function () {
+                                        window.requestAnimationFrame(function () {
+                                            document.getElementById("custom_rooms").scrollTo(tempCatData[i].offsetLeft,0);
+                                        });
+                                    });
+                                    
+                                } else {
+                                    tempCatData[i].classList.remove("active");
 
-                                    } else {
-                                        tempCatData[i].classList.remove("active");
-
-                                    }
                                 }
-                            }, 200);
+                            }
 
                         });
                     });
@@ -879,6 +913,7 @@ function addCustomRoom() {
         let temp = document.getElementById("catActiveMain");
         window.requestAnimationFrame(function () {
             if (temp && activeCatDOM) {
+                activeCatDOM.click();
                 temp.style.left = activeCatDOM.offsetLeft;
                 temp.style.height = activeCatDOM.offsetHeight;
                 temp.style.width = activeCatDOM.offsetWidth;
