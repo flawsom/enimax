@@ -1,6 +1,6 @@
 window.parent.postMessage({ "action": 1, data: "any" }, "*");
 
-if(config.chrome){
+if(config.chrome  || config.electron){
     let chromeDOM = document.getElementsByClassName("notChrome");
     for(let i = 0; i < chromeDOM.length; i++){
         chromeDOM[i].style.display = "none";
@@ -281,7 +281,7 @@ document.getElementById("errorRemove").onclick = function () {
     downloadQueue.removeDone(downloadQueue, false);
 }
 
-if (config.chrome) {
+if (config.chrome  || config.electron) {
     document.getElementById("queueOpen").style.display = "none";
     document.getElementById("restoreData").style.display = "none";
 }
@@ -452,7 +452,7 @@ document.getElementById("queueOpen").onclick = function () {
 
 
 
-if (!config.chrome) {
+if (!(config.chrome || config.electron)) {
     document.getElementById("offlineCon").style.display = "block";
 
     if(config.local){
@@ -701,7 +701,7 @@ window.onmessage = function (x) {
 
     if (parseInt(x.data.action) == 200) {
         token = x.data.data;
-        if (config.chrome == false && token.indexOf("connect.sid") == -1) {
+        if (!(config.chrome  || config.electron) && token.indexOf("connect.sid") == -1) {
             window.parent.postMessage({ "action": 21, data: "" }, "*");
 
         } else {

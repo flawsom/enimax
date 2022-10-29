@@ -296,7 +296,7 @@ async function apiCall(method, form, callback, args = [], timeout = false) {
 
         }
         else if (config.local) {
-            if(config.chrome){
+            if(config.chrome  || config.electron){
                 response = await actionDexie[form.action]({ "body": form });
 
             }else{

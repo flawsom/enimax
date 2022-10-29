@@ -137,7 +137,7 @@ function ini() {
             let scrollToDOM;
             var a = document.getElementsByClassName("card_con");
             document.getElementById("updateImage").style.display = "inline-block";
-            if(!config.chrome){
+            if(!(config.chrome || config.electron)){
                 document.getElementById("downloadAll").style.display = "inline-block";
             }
             document.getElementById("copyLink").style.display = "inline-block";
@@ -168,7 +168,7 @@ function ini() {
             };
 
             let downloadedList = [];
-            if(!config.chrome){
+            if(!(config.chrome || config.electron)){
                 try{
                     downloadedList = await window.parent.listDir(data.mainName);
                     let tempList = [];
@@ -238,7 +238,7 @@ function ini() {
                 tempDiv.append(tempDiv2);
                 tempDiv.append(tempDiv3);
                 let check = false;
-                if(!config.chrome){
+                if(!(config.chrome || config.electron)){
                 
                     try{
                         await checkIfExists(`/${data.mainName}/${btoa(normalise(trr))}/.downloaded`, downloadedList, btoa(normalise(trr)));
@@ -288,11 +288,11 @@ function ini() {
                         window.parent.postMessage({ "action": 4, "data": `?watch=${localQuery}` }, "*");
                     };
                 }
-                if(!config.chrome){
+                if(!(config.chrome || config.electron)){
                     tempDiv.append(tempDiv4);
                 }
 
-                if(check || !downloaded || config.chrome){
+                if(check || !downloaded || config.chrome || config.electron){
                     epCon.append(tempDiv);
                     if(trr == currentLink){
                         scrollToDOM = tempDiv;
@@ -364,7 +364,7 @@ function ini() {
                 
             }
 
-            if(scrollToDOM && !config.chrome){
+            if(scrollToDOM && !(config.chrome || config.electron)){
                 document.getElementById("downloadNext").style.display = "inline-block";
                 document.getElementById("downloadNext").onclick = function(){
                     let howmany = parseInt(prompt("How many episodes do you want to download?", 5));

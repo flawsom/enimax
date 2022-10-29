@@ -5,5 +5,6 @@ var config = {
     "chrome" : false,
     "firefox" : false,
     "beta" : false,
-    "sockets": false
+    "sockets": false,
+    "electron": true,
 };

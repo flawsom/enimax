@@ -266,7 +266,7 @@ function checkIfExists(localURL){
 window.onmessage = async function (x) {
 	if (x.data.action == 1) {
 		data_main = x.data;
-		if(config.chrome){
+		if(config.chrome || config.electron){
 			get_ep();
 		}else{
 			let mainName = localStorage.getItem("mainName");
@@ -311,7 +311,7 @@ window.onmessage = async function (x) {
 		a.vid.currentTime = x.data.elapsed;
 	} else if (parseInt(x.data.action) == 200) {
 		token = x.data.data;
-		if (config.chrome == false && token.indexOf("connect.sid") == -1) {
+		if (!(config.chrome  || config.electron) && token.indexOf("connect.sid") == -1) {
 			window.parent.postMessage({ "action": 21, data: "" }, "*");
 
 		} else {
@@ -1115,7 +1115,7 @@ class vid {
 		document.body.style.backgroundColor = "black";
 
 
-		if (x.downTown >= 100 && !config.chrome) {
+		if (x.downTown >= 100 && !(config.chrome || config.electron)) {
 
 			window.parent.postMessage({ "action": 400 }, "*");
 
@@ -2184,7 +2184,7 @@ let socketCalledIni = false;
 
 
 if (location.search.includes("engine=3") && config.sockets) {
-	if (!config.chrome) {
+	if (!(config.chrome || config.electron)) {
 		CustomXMLHttpRequest = XMLHttpRequest2;
 	}
 	let socket = io(extensionList[3].config.socketURL, { transports: ["websocket"] });
@@ -2233,7 +2233,7 @@ window.addEventListener("keydown", function (event) {
 	else if (event.keyCode == 38 || event.keyCode == 40) {
 		a.updateTimeout(a);
 	} else if (event.keyCode == 39) {
-		if (a.seekMode || config.chrome) {
+		if (a.seekMode || config.chrome  || config.electron) {
 			a.vid.currentTime += 30;
 			a.updateTime(a);
 			event.preventDefault();
@@ -2242,7 +2242,7 @@ window.addEventListener("keydown", function (event) {
 
 		}
 	} else if (event.keyCode == 37) {
-		if (a.seekMode || config.chrome) {
+		if (a.seekMode || config.chrome  || config.electron) {
 			a.vid.currentTime -= 30;
 			a.updateTime(a);
 
@@ -2268,7 +2268,7 @@ window.addEventListener("keydown", function (event) {
 	}
 });
 
-if (config.chrome) {
+if (config.chrome  || config.electron) {
 	document.getElementById("fullscreenToggle").style.display = "block";
 }
 document.getElementById("fullscreenToggle").onclick = function () {

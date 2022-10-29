@@ -29,7 +29,7 @@ function deviceReady() {
             let formation = {};
             formation.method = "POST";
 
-            if(!config.chrome){
+            if(!config.chrome || config.electron){
                 let token = cordova.plugin.http.getCookieString(config.remoteWOport);
                 if (token) {
                     formation.headers = {};
@@ -69,6 +69,6 @@ document.addEventListener("deviceready", function () {
 }, false);
 
 
-if(config.chrome){
+if(config.chrome || config.electron){
     deviceReady();
 }

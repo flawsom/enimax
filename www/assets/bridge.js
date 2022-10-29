@@ -593,7 +593,7 @@ async function MakeFetch(url, options) {
     });
 }
 
-if (config.chrome) {
+if (config.chrome || config.electron) {
 
     document.getElementById("player").onload = function () {
         if (document.getElementById("player").contentWindow.location.href.includes("www/fallback.html")) {
@@ -709,7 +709,7 @@ function exec_action(x, reqSource) {
 
         });
     } else if (x.action == 15) {
-        if (!config.chrome) {
+        if (!(config.chrome || config.electron)) {
             MusicControls.updateIsPlaying(true);
         }
 
@@ -746,14 +746,14 @@ function exec_action(x, reqSource) {
         document.getElementById("player").style.display = "block";
 
     } else if (x.action == 16) {
-        if (!config.chrome) {
+        if (!(config.chrome || config.electron)) {
             MusicControls.updateIsPlaying(false);
         }
     } else if (x.action == 20) {
 
         let toSend;
 
-        if (config.chrome) {
+        if (config.chrome || config.electron) {
             toSend = "";
         } else {
             toSend = cordova.plugin.http.getCookieString(config.remoteWOport);
@@ -798,7 +798,7 @@ function exec_action(x, reqSource) {
             isPlaying: x.isPlaying
         });
     } else if (x.action == 12) {
-        if (!config.chrome) {
+        if (!config.chrome || config.electron) {
 
             var showName = x.nameShow.split("-");
 
@@ -913,17 +913,17 @@ function exec_action(x, reqSource) {
         }
     } else if (x.action == 4) {
 
-        if (config.chrome && document.getElementById("player").contentWindow.location.href.includes("/www/fallback.html")) {
+        if ((config.chrome || config.electron) && document.getElementById("player").contentWindow.location.href.includes("/www/fallback.html")) {
 
             document.getElementById("player").contentWindow.location = ("pages/player/index.html" + x.data);
 
-        } else if (config.chrome) {
+        } else if (config.chrome || config.electron) {
             document.getElementById("player").contentWindow.location.replace("pages/player/index.html" + x.data);
 
         }
 
 
-        if (!config.chrome) {
+        if (!(config.chrome || config.electron)) {
             let checkLock = 0;
 
             setTimeout(function () {
@@ -1053,7 +1053,7 @@ async function onDeviceReady() {
 
 document.addEventListener("deviceready", onDeviceReady, false);
 
-if (config.chrome) {
+if (config.chrome || config.electron) {
     document.getElementById("frame").src = "pages/homepage/index.html";
 }
 

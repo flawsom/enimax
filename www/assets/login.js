@@ -32,7 +32,7 @@ function deviceReady(){
 
     
 
-    if(config.chrome){
+    if(config.chrome || config.electron){
         MakeCusReq = async function(url, options) {
             return new Promise(function (resolve, reject) {
                 fetch(url, options).then((response) => response.text()).then((response) => {
@@ -61,7 +61,7 @@ function deviceReady(){
 
         };
 
-        if(config.chrome){
+        if(config.chrome || config.electron){
             fData = {
                 method: 'POST',
                 body: formData,
@@ -73,7 +73,7 @@ function deviceReady(){
             data = JSON.parse(data);
             alert(data.message);
 
-            if (config.chrome || cordova.plugin.http.getCookieString(config.remoteWOport).indexOf("connect.sid") > -1) {
+            if (config.chrome || config.electron || cordova.plugin.http.getCookieString(config.remoteWOport).indexOf("connect.sid") > -1) {
                 window.location = "index.html";
             } else {
                 sendNoti([2, "red", "Error", "Couldn't log you in"]);
@@ -98,7 +98,7 @@ document.addEventListener("deviceready", function () {
     deviceReady();
 }, false);
 
-if(config.chrome){
+if(config.chrome || config.electron){
     deviceReady();
 }
 
