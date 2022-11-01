@@ -5,13 +5,14 @@
 	<title></title>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' blob:; object-src 'self'">
 	<link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
 	<link href="index.css" rel="stylesheet">
 	<link href="../../notification/noti.css" rel="stylesheet">
 	<link href="../../assets/index.css" rel="stylesheet">
 	<script src="../../assets/socket.js" ></script>
 
-	<script type="text/javascript" src="../../extensions/index.js"></script>
+	<script type="text/javascript" src="../../assets/config.js"></script>
 	<script src="../../assets/hls.js"></script>
 	<script type="text/javascript" src="../../notification/noti.js"></script>
 	<script type="text/javascript" src="../../assets/index.js"></script>
@@ -27,7 +28,7 @@
 		<div class="overlay" id="seek_overlay"></div>
 		<div id="noti_con"></div>
 		<div  id="lock_2"></div>
-
+		<div id="skipIntroDOM">Skip Intro</div>
 
 
 		<div id="con_2">
@@ -73,6 +74,37 @@
 
 					<hr class="divider" />
 
+
+					<div style="display: inline-block;" class="bottomMargin">
+						<span style="color:white;display: inline-block;vertical-align: middle;margin-right: 15px;">Hide Skip Intro
+							: </span>
+						<label class="switch" style="vertical-align: middle;">
+							<input type="checkbox" id="showIntroSlider">
+							<span class="slider round"></span>
+						</label>
+					</div>
+
+
+					<div style="display: inline-block;" class="bottomMargin">
+
+						<span style="color:white;display: inline-block;vertical-align: middle;margin-right: 15px;">Automatically Skip Intro
+							: </span>
+						<label class="switch" style="vertical-align: middle;">
+							<input type="checkbox" id="autoIntroSlider">
+							<span class="slider round"></span>
+						</label>
+					</div>
+
+					<hr class="divider" />
+
+
+					<div style="color: white;margin-top: 15px;">
+						<div style="display: inline-block;" class="bottomMargin">Double tap time :  <input type="text"  class="textBox" id="doubleTime" /></div>
+						<div style="display: inline-block;" class="bottomMargin">Skip button time :  <input type="text"  class="textBox" id="skipTime" /></div>
+						<div style="display: inline-block;" class="bottomMargin">Subtitle Margin (Tip: try negative numbers) :  <input type="number"  class="textBox" id="subMar" /></div>
+					</div> 
+
+					<hr class="divider" />
 
 					<div id="sourceTitle" class="settingTitle" style="display: block !important">Fill mode: </div>
 

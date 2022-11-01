@@ -1,11 +1,72 @@
 var username = "hi";
 var lastSrc = "";
+const extensionList = window.parent.returnExtensionList();
 var token;
 var hls;
-
+let doubleTapTime = isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
+let skipButTime = isNaN(parseInt(localStorage.getItem("skipButTime"))) ? 30 : parseInt(localStorage.getItem("skipButTime"));
+let data_main = {};
+let skipIntroInfo = {};
 var CustomXMLHttpRequest = XMLHttpRequest;
+let curTrack = undefined;
+let marginApplied = false;
+function setSubtitleMarginMain(track){
+    let success = -1;
+    try{
+        let subMargin = parseInt(localStorage.getItem("sub-margin"));
+        if(track && "cues" in track) { 
+            if(!isNaN(subMargin) && subMargin !== 0){
+                for (let j = 0; j < track.cues.length; j++) {
+                    success = 1;
+                    track.cues[j].line = subMargin;
+                }
+            }else{
+                success = -2;
+            }
+        }
+    }catch(err){
+        success = -1;
+        console.error(err);
+    }
+
+    return success;
+}
+
+function setSubtitleMargin(track, count = 0){
+    let status = setSubtitleMarginMain(track);
+    if(status === -1 && count < 20){
+        setTimeout(function(){
+            setSubtitleMargin(track, ++count);
+        }, 400);
+    }
+}
+
+document.getElementById("doubleTime").value = doubleTapTime;
+document.getElementById("skipTime").value = skipButTime;
+document.getElementById("subMar").value = isNaN(parseInt(localStorage.getItem("sub-margin"))) ? 0 : parseInt(localStorage.getItem("sub-margin")) ;
+document.getElementById("doubleTime").oninput = function(){
+	if(isNaN(parseInt(document.getElementById("doubleTime").value))){
+		document.getElementById("doubleTime").value = "";
+	}else{
+		localStorage.setItem("doubleTapTime", document.getElementById("doubleTime").value);
+		doubleTapTime =  isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
+	}
+}
 
 
+document.getElementById("skipTime").oninput = function(){
+	if(isNaN(parseInt(document.getElementById("skipTime").value))){
+		document.getElementById("skipTime").value = "";
+	}else{
+		localStorage.setItem("skipButTime", document.getElementById("skipTime").value);
+		skipButTime =  isNaN(parseInt(localStorage.getItem("skipButTime"))) ? 5 : parseInt(localStorage.getItem("skipButTime"));
+	}
+}
+
+document.getElementById("subMar").oninput = function(){
+	localStorage.setItem("sub-margin", this.value);
+    setSubtitleMargin(curTrack);
+}
 
 
 var sid;
@@ -13,7 +74,6 @@ var sid;
 let engineTemp = location.search.split("engine=");
 let engine;
 let nextTrackTime;
-let curTrack = undefined;
 if (engineTemp.length == 1) {
 	engine = 0;
 } else {
@@ -25,6 +85,8 @@ let downloaded = localStorage.getItem("offline") === 'true';
 if (downloaded) {
 	CustomXMLHttpRequest = window.parent.XMLHttpRequest;
 }
+let tempConfig = config;
+
 class XMLHttpRequest2 {
 	constructor() {
 		this.headers = {};
@@ -33,10 +95,13 @@ class XMLHttpRequest2 {
 
 		this.delegate = null;
 		this.requestHeaders = {
-			"origin": "https://rapid-cloud.ru",
-			"referer": "https://rapid-cloud.ru/",
-			"sid": sid,
+			"origin": extensionList[3].config.origin,
+			"referer": extensionList[3].config.referer,
 		};
+		
+		if(tempConfig.sockets){
+			this.requestHeaders["sid"] = sid;
+		}
 		this.responseHeaders = {};
 		this.listeners = {};
 		this.readyState = 0;
@@ -178,10 +243,60 @@ class XMLHttpRequest2 {
 
 }
 
-window.onmessage = function (x) {
+function normalise(x){
+    x = x.replace("?watch=","");
+    x = x.split("&engine=")[0];
+    return x;
+}
+function checkIfExists(localURL){
+	return (new Promise(function(resolve, reject){
+		let timeout = setTimeout(function(){
+			reject("timeout");
+		},1000);
+
+		window.parent.makeLocalRequest("GET", `${localURL}`).then(function(x){
+			clearTimeout(timeout);
+			resolve("yes");
+		}).catch(function(err){
+			clearTimeout(timeout);
+			reject("no");
+		});
+	}));
+}
+window.onmessage = async function (x) {
 	if (x.data.action == 1) {
 		data_main = x.data;
-		get_ep();
+		if(config.chrome){
+			get_ep();
+		}else{
+			let mainName = localStorage.getItem("mainName");
+			let rootDir = `/${mainName}/${btoa(normalise(location.search))}`;
+			let localURL = `${rootDir}/.downloaded`;
+
+			try{
+				await checkIfExists(localURL);
+				let res;
+				if(localStorage.getItem("alwaysDown") === "true"){
+					res = true;
+				}else{
+					res = confirm("Want to open the downloaded version?");
+				}
+				if(res){
+					let viddata = (await window.parent.makeLocalRequest("GET", `${rootDir}/viddata.json`));
+					viddata = JSON.parse(viddata).data;
+					data_main.sources = [{
+						"name": viddata.sources[0].name,
+						"type": viddata.sources[0].type,
+						"url": viddata.sources[0].type == 'hls' ? `${rootDir}/master.m3u8` : `${window.parent.cordova.file.externalDataDirectory}/${rootDir}/master.m3u8`,
+					}];
+					CustomXMLHttpRequest = window.parent.XMLHttpRequest;
+				}
+			}catch(err){
+				console.error(err);
+			}finally{
+				get_ep();
+			}
+		}
 	} else if (x.data.action == "play") {
 		a.vid.play();
 	} else if (x.data.action == "pause") {
@@ -374,9 +489,7 @@ class vid {
 
 
 		this.vid.addEventListener("loadedmetadata", function () {
-			if(config.beta){
-				window.parent.postMessage({ "action": 12, nameShow: data_main.name, episode: data_main.episode, prev: true, next: true, "duration" : x.vid.duration, "elapsed" : x.vid.currentTime}, "*");
-			}
+			window.parent.postMessage({ "action": 12, nameShow: data_main.name, episode: data_main.episode, prev: true, next: true, "duration" : x.vid.duration, "elapsed" : x.vid.currentTime}, "*");
 			x.total.innerText = x.timeToString(x.vid.duration);
 
 			let whichFit = parseInt(localStorage.getItem("fillMode")) || 0;
@@ -568,7 +681,30 @@ class vid {
 
 		setInterval(function () {
 
-			window.parent.postMessage({ "action": 301,  "elapsed" : x.vid.currentTime, "isPlaying":!x.vid.paused}, "*");
+			if(config.beta){
+				window.parent.postMessage({ "action": 301,  "elapsed" : x.vid.currentTime, "isPlaying":!x.vid.paused}, "*");
+			}
+
+			try{
+				if(skipIntroInfo && x.vid.currentTime > skipIntroInfo.start && x.vid.currentTime < skipIntroInfo.end){
+					if(localStorage.getItem("autoIntro") === "true"){
+						x.vid.currentTime = skipIntroInfo.end;
+					}
+
+					if(localStorage.getItem("showIntro") !== "true"){
+						document.getElementById("skipIntroDOM").style.display = "block";
+					}else{
+						document.getElementById("skipIntroDOM").style.display = "none";
+
+					}
+
+				}else{
+					document.getElementById("skipIntroDOM").style.display = "none";
+
+				}
+			}catch(err){
+
+			}
 
 			if (((new Date()).getTime() - x.lastTime) > 3000 && x.open == 1) {
 				x.close_controls();
@@ -706,12 +842,12 @@ class vid {
 		} else if (this.doubleMode == 1 && typeof this.doubleClickCoords == 'object' && this.doubleClickCoords.length == 2 && Math.abs(this.doubleClickCoords[0] - coor[0]) < 50 && Math.abs(this.doubleClickCoords[1] - coor[1]) < 50) {
 
 			if (coor[0] > window.innerWidth / 2) {
-				this.vid.currentTime += 5;
+				this.vid.currentTime += doubleTapTime;
 				a.updateTime(a);
 
 
 			} else {
-				this.vid.currentTime -= 5;
+				this.vid.currentTime -= doubleTapTime;
 				a.updateTime(a);
 
 
@@ -1269,12 +1405,11 @@ function get_ep_ini() {
 				temp = temp.join("&");
 				delete data_main["next"];
 				try {
-					console.log(`${rootDir.split("/")[1]}/${temp}`);
 					window.parent.makeLocalRequest("GET", `/${rootDir.split("/")[1]}/${btoa(temp)}/.downloaded`).then((x) => {
 						data_main.next = encodeURIComponent(`/${rootDir.split("/")[1]}/${btoa(temp)}`);
 						document.getElementById("next_ep").style.display = "table-cell";
 
-					}).catch((x) => console.log(x));
+					}).catch((x) => console.error(x));
 				} catch (err) {
 
 				}
@@ -1286,22 +1421,31 @@ function get_ep_ini() {
 				temp = temp.join("&");
 				delete data_main["prev"];
 				try {
-					console.log(`${rootDir.split("/")[1]}/${temp}`);
 					window.parent.makeLocalRequest("GET", `/${rootDir.split("/")[1]}/${btoa(temp)}/.downloaded`).then((x) => {
 						data_main.prev = encodeURIComponent(`/${rootDir.split("/")[1]}/${btoa(temp)}`);
 						document.getElementById("prev_ep").style.display = "table-cell";
 
-					}).catch((x) => console.log(x));
+					}).catch((x) => console.error(x));
 				} catch (err) {
 
 				}
 			}
 
+			let skipIntro;
+			if("skipIntro" in viddata.sources[0]){
+				skipIntro = viddata.sources[0].skipIntro;
+			}
 			data_main.sources = [{
 				"name": viddata.sources[0].name,
 				"type": viddata.sources[0].type,
 				"url": viddata.sources[0].type == 'hls' ? `${rootDir}/master.m3u8` : `${window.parent.cordova.file.externalDataDirectory}/${rootDir}/master.m3u8`,
 			}];
+
+			if(skipIntro){
+				data_main.sources[0].skipIntro = skipIntro;
+			}
+
+			
 
 			engine = data_main.engine;
 			get_ep();
@@ -1330,7 +1474,6 @@ function next_ep_func(t, msg) {
 		document.getElementById("ep_dis").innerHTML = "loading...";
 		document.getElementById("total").innerHTML = "";
 		ini_main();
-		console.log("inimain 1");
 
 	} else if (t == -1 && typeof data_main.prev != "undefined") {
 		history.replaceState({ page: 1 }, "", "?watch=" + (data_main.prev));
@@ -1344,7 +1487,6 @@ function next_ep_func(t, msg) {
 		document.getElementById("ep_dis").innerHTML = "loading...";
 		document.getElementById("total").innerHTML = "";
 		ini_main();
-		console.log("inimain 2");
 
 	} else if (t == 0) {
 		history.replaceState({ page: 1 }, "", msg);
@@ -1358,7 +1500,6 @@ function next_ep_func(t, msg) {
 		document.getElementById("ep_dis").innerHTML = "loading...";
 		document.getElementById("total").innerHTML = "";
 		ini_main();
-		console.log("inimain 3");
 
 	}
 }
@@ -1381,7 +1522,6 @@ document.querySelector("#prev_ep").onclick = function () {
 
 var update_int, get_ep_check, lastUpdate, update_check, int_up, cur_link, name_ep_main, source;
 function ini_main() {
-	console.log("ini_main 4");
 	if (get_ep_check != 1) {
 
 		clearInterval(update_int);
@@ -1404,6 +1544,20 @@ function ini_main() {
 
 
 		get_ep_ini();
+
+		try {
+			navigator.mediaSession.setActionHandler('nexttrack', () => {
+				next_ep_func(1);
+		
+			});
+			navigator.mediaSession.setActionHandler('previoustrack', () => {
+				next_ep_func(-1);
+		
+			});
+		}
+		catch (error) {
+		
+		}
 
 	}
 }
@@ -1477,6 +1631,8 @@ async function update(x) {
 			errorCount = 0;
 			alert("Time could not be synced with the server.");
 
+		}else if(errorCount == 5){
+			lastUpdate = a.vid.currentTime;
 		}
 
 	});
@@ -1560,6 +1716,8 @@ function loadSubs() {
 			if (a.vid.textTracks[i].label == localStorage.getItem(`${engine}-subtitle`) && check) {
 				selectDOM.value = i;
 				curTrack = a.vid.textTracks[i];
+                setSubtitleMargin(curTrack);
+
 				document.getElementById("fastFor").style.display = "block";
 
 				a.vid.textTracks[i].mode = "showing";
@@ -1581,13 +1739,12 @@ function loadSubs() {
 
 			}
 
-			for (var i = 0; i < a.vid.textTracks.length; i++) {
+			for (let i = 0; i < a.vid.textTracks.length; i++) {
 				if (i == parseInt(value)) {
 					a.vid.textTracks[i].mode = "showing";
 					curTrack = a.vid.textTracks[i];
+                    setSubtitleMargin(curTrack);
 					document.getElementById("fastFor").style.display = "block";
-
-
 					localStorage.setItem(`${engine}-subtitle`, a.vid.textTracks[i].label);
 				} else {
 					a.vid.textTracks[i].mode = "hidden";
@@ -1616,7 +1773,12 @@ function chooseQual(x, type, th) {
 	let defURL;
 	if (x !== null) {
 		skipTo = a.vid.currentTime;
-
+		if(th.getAttribute("data-intro") === "true"){
+			skipIntroInfo.start = parseInt(th.getAttribute("data-start"));
+			skipIntroInfo.end = parseInt(th.getAttribute("data-end"));
+		}else{
+			skipIntroInfo = {};	
+		}
 		let qCon = document.getElementById("quality_con").children;
 		for (var i = 0; i < qCon.length; i++) {
 			if (qCon[i] == th) {
@@ -1636,6 +1798,13 @@ function chooseQual(x, type, th) {
 		for (let i = 0; i < qCon.length; i++) {
 			if (sName == qCon[i].innerText) {
 				defURL = data_main.sources[i].url;
+				if(qCon[i].getAttribute("data-intro") === "true"){
+					skipIntroInfo.start = parseInt(qCon[i].getAttribute("data-start"));
+					skipIntroInfo.end = parseInt(qCon[i].getAttribute("data-end"));
+				}else{
+					skipIntroInfo = {};	
+				}
+
 
 				for (let j = 0; j < qCon.length; j++) {
 					if (j == i) {
@@ -1647,6 +1816,7 @@ function chooseQual(x, type, th) {
 					}
 				}
 
+				break;
 			}
 		}
 
@@ -1821,16 +1991,26 @@ async function get_ep(x = 0) {
 			}
 
 			let temp1;
+			let curAttributes = {
+				"data-url": data_main.sources[i].url,
+				"data-type": data_main.sources[i].type,
+				"data-name": data_main.sources[i].name,
+			};
 
+			if("skipIntro" in data_main.sources[i] && "start" in data_main.sources[i].skipIntro && "end" in data_main.sources[i].skipIntro){
+				curAttributes["data-intro"] = "true";
+				curAttributes["data-start"] = data_main.sources[i].skipIntro.start;
+				curAttributes["data-end"] = data_main.sources[i].skipIntro.end;
+				if(i == 0){
+					skipIntroInfo.start = data_main.sources[i].skipIntro.start;
+					skipIntroInfo.end = data_main.sources[i].skipIntro.end;					
+				}
+			}
 			// if(data_main.sources[i].type != "hls"){			
 			temp1 = createElement({
 				"class": "qual",
 				"innerText": data_main.sources[i].name,
-				"attributes": {
-					"data-url": data_main.sources[i].url,
-					"data-type": data_main.sources[i].type,
-					"data-name": data_main.sources[i].name,
-				},
+				"attributes": curAttributes,
 				"listeners": {
 					"click": function () {
 						localStorage.setItem(`${engine}-sourceName`, this.getAttribute("data-name"));
@@ -1942,6 +2122,19 @@ if (localStorage.getItem("rewatch")) {
 	localStorage.setItem("rewatch", "false");
 }
 
+
+document.querySelector("#showIntroSlider").checked = localStorage.getItem("showIntro") === "true";
+document.querySelector("#autoIntroSlider").checked = localStorage.getItem("autoIntro") === "true";
+
+document.querySelector("#showIntroSlider").onclick = function(){
+	localStorage.setItem("showIntro", document.querySelector("#showIntroSlider").checked === true);
+}
+
+document.querySelector("#autoIntroSlider").onclick = function(){
+	localStorage.setItem("autoIntro", document.querySelector("#autoIntroSlider").checked === true);
+}
+
+
 document.querySelector("#autoplay").addEventListener("change", function () {
 	if (document.querySelector("#autoplay").checked) {
 		localStorage.setItem("autoplay", "true");
@@ -1962,7 +2155,7 @@ document.querySelector("#rewatch").addEventListener("change", function () {
 
 
 document.querySelector("#repBack").onclick = function () {
-	a.vid.currentTime -= 30;
+	a.vid.currentTime -= skipButTime;
 	a.updateTime(a);
 
 };
@@ -1979,7 +2172,7 @@ document.querySelector("#closeSetting").onclick = function () {
 
 
 document.querySelector("#repForward").onclick = function () {
-	a.vid.currentTime += 30;
+	a.vid.currentTime += skipButTime;
 	a.updateTime(a);
 
 };
@@ -1990,40 +2183,14 @@ document.querySelector("#repForward").onclick = function () {
 let socketCalledIni = false;
 
 
-if (location.search.includes("engine=3")) {
+if (location.search.includes("engine=3") && config.sockets) {
 	if (!config.chrome) {
 		CustomXMLHttpRequest = XMLHttpRequest2;
-	} else {
-		chrome.webRequest.onBeforeSendHeaders.addListener(
-			function (details) {
-				details.requestHeaders.push({
-					"name": "origin",
-					"value": "https://rapid-cloud.ru"
-				});
-
-				details.requestHeaders.push({
-					"name": "referer",
-					"value": "https://rapid-cloud.ru/"
-				});
-
-				details.requestHeaders.push({
-					"name": "sid",
-					"value": sid
-				});
-
-
-
-
-
-				return { requestHeaders: details.requestHeaders };
-			},
-			{ urls: ['https://*.dayimage.net/*'] },
-			['blocking', 'requestHeaders']
-		);
 	}
-	let socket = io("https://ws1.rapid-cloud.ru", { transports: ["websocket"] });
+	let socket = io(extensionList[3].config.socketURL, { transports: ["websocket"] });
 	socket.on("connect", () => {
 		sid = socket.id;
+		localStorage.setItem("sid", sid);
 		if(socketCalledIni === false){
 			if (config.local || downloaded) {
 				ini_main();
@@ -2058,19 +2225,6 @@ for (var i = 0; i < playerFitDOM.length; i++) {
 
 
 
-try {
-	navigator.mediaSession.setActionHandler('nexttrack', () => {
-		next_ep_func(1);
-
-	});
-	navigator.mediaSession.setActionHandler('previoustrack', () => {
-		next_ep_func(-1);
-
-	});
-}
-catch (error) {
-
-}
 window.addEventListener("keydown", function (event) {
 
 	if (event.keyCode == 32) {
@@ -2120,3 +2274,10 @@ if (config.chrome) {
 document.getElementById("fullscreenToggle").onclick = function () {
 	a.goFullScreen(a);
 };
+document.getElementById("skipIntroDOM").onclick = function(){
+	if("end" in skipIntroInfo && !isNaN(skipIntroInfo.end)){
+		a.vid.currentTime = skipIntroInfo.end;
+		this.style.display = "none";
+	}
+}
+applyTheme();
