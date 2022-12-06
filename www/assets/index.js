@@ -93,3 +93,12 @@ const backgroundGradients = [
     "linear-gradient(to bottom, #ec008c, #fc6767)",
     "linear-gradient(to bottom, #ffd89b, #19547b)"
 ];
+
+function errorBuilder(message, props){
+    let err = new Error(message);
+    for(let x in props){
+        err[x] = props[x];
+    }
+
+    return err;
+}
