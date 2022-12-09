@@ -9,13 +9,37 @@ var socket;
 let frameHistory = [];
 var token;
 let seekCheck = true;
-
+let castSession = null;
 function returnExtensionList() {
     return extensionList;
 }
 
 function returnExtensionNames() {
     return extensionNames;
+}
+
+function isCasting(){
+    try{
+        if(castSession && "status" in castSession){
+            return castSession.status == "connected";
+        }else{
+            return false;
+        }
+    }catch(err){
+        return false;
+    }
+}
+
+function destroySession(){
+    try{
+        if(castSession && "stop" in castSession){
+            castSession.stop();
+        }else{
+            return false;
+        }
+    }catch(err){
+        return false;
+    }
 }
 
 function setGradient() {
@@ -1070,6 +1094,38 @@ window.addEventListener('message', function (x) {
 
 
 
+function onSessionRequestSuccess(session, data) {
+    castSession = session;
+
+    var mediaInfo = new chrome.cast.media.MediaInfo(
+        data.url,
+        data.type);
+
+    console.log(mediaInfo);
+    var request = new chrome.cast.media.LoadRequest(mediaInfo);
+    session.loadMedia(request, () => {
+        // session.getMe
+        try{
+            castSession._getMedia().seek({currentTime: data.currentTime});
+        }catch(err){
+            console.error(err);
+            alert("Could not seek");
+        }
+    }, (err) =>{
+        console.error(err);
+        alert("Could not load the video");
+    });
+}
+
+
+function castVid(data){
+    chrome.cast.requestSession((session) => {
+        onSessionRequestSuccess(session, data);
+    }, () => {
+        alert("Could not cast the video")
+    });
+
+}
 
 async function onDeviceReady() {
     await SQLInit();
@@ -1081,6 +1137,29 @@ async function onDeviceReady() {
         cordova.plugins.backgroundMode.disableWebViewOptimizations();
         cordova.plugins.backgroundMode.disableBatteryOptimizations();
     });
+
+    const initializeCastApi = function () {
+        console.log('initializeCastApi');
+
+        var sessionRequest = new chrome.cast.SessionRequest(
+            chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID);
+        var apiConfig = new chrome.cast.ApiConfig(
+            sessionRequest, () => {}, receiverListener);
+        chrome.cast.initialize(apiConfig, () => {}, () => {
+
+        });
+    };
+
+    function receiverListener(availability) {
+        console.log('receiverListener', availability);
+
+        if (availability === chrome.cast.ReceiverAvailability.AVAILABLE) {
+
+        }
+    }
+
+   initializeCastApi();
+
 
     token = cordova.plugin.http.getCookieString(config.remoteWOport);
     // saveDexieToLocal();

@@ -18,6 +18,7 @@
     "cordova-plugin-android-tv": "github:frontyard/cordova-plugin-android-tv",
     "cordova-plugin-background-mode": "^0.7.3",
     "cordova-plugin-badge": "^0.8.8",
+    "cordova-plugin-chromecast": "github:jellyfin/cordova-plugin-chromecast",
     "cordova-plugin-device": "^2.0.3",
     "cordova-plugin-file": "^6.0.2",
     "cordova-plugin-file-transfer": "github:enimax-anime/cordova-plugin-file-transfer",
@@ -62,7 +63,8 @@
         "ANDROIDBLACKLISTSECURESOCKETPROTOCOLS": "SSLv3,TLSv1"
       },
       "cordova-plugin-xhr-local-file": {},
-      "cordova-plugin-file-transfer": {}
+      "cordova-plugin-file-transfer": {},
+      "cordova-plugin-chromecast": {}
     },
     "platforms": [
       "android"

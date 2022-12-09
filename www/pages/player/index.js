@@ -3,6 +3,7 @@ var lastSrc = "";
 const extensionList = window.parent.returnExtensionList();
 var token;
 var hls;
+let selectedMain = null;
 let doubleTapTime = isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
 let skipButTime = isNaN(parseInt(localStorage.getItem("skipButTime"))) ? 30 : parseInt(localStorage.getItem("skipButTime"));
 let data_main = {};
@@ -1846,7 +1847,6 @@ function chooseQual(x, type, th) {
 
 	if (type == "hls") {
 
-
 		if (Hls.isSupported()) {
 
 			hls = new Hls({
@@ -1855,9 +1855,13 @@ function chooseQual(x, type, th) {
 			if (x == null) {
 
 				hls.loadSource(defURL);
+				selectedMain = [type, defURL];
+
 			}
 			else {
 				hls.loadSource(x);
+				selectedMain = [type, x];
+
 
 			}
 
@@ -1875,9 +1879,13 @@ function chooseQual(x, type, th) {
 		try {
 			if (x == null) {
 				a.vid.src = defURL;
+				selectedMain = [type, defURL];
+
 
 			} else {
 				a.vid.src = x;
+				selectedMain = [type, x];
+
 			}
 			a.vid.load();
 			a.vid.currentTime = skipTo;
@@ -2344,3 +2352,36 @@ function closeSettings() {
 
 let settingsPullInstance = new settingsPull(document.getElementById("settingHandlePadding"), closeSettings);
 let settingsPullInstanceT = new settingsPull(document.getElementById("setting_con_main"), closeSettings, true);
+
+document.getElementById("cast").onclick = function(){
+	if(window.parent.isCasting()){
+		window.parent.destroySession();
+	}else{
+
+		let type, url;
+		if(selectedMain){
+			url = selectedMain[1];
+			type = selectedMain[0];
+		}else{
+			url = data_main.sources[0].url;
+			type = data_main.sources[0].type;
+		}
+
+		if(type == "hls"){
+			type = "application/x-mpegURL";
+		}else{
+			type = "video/mp4";
+		}
+
+		window.parent.castVid({
+			url,
+			type,
+			currentTime : a.vid.currentTime
+		});
+	}
+
+}
+
+if(window.parent.isCasting()){
+	document.getElementById("cast").className = "casting";
+}
