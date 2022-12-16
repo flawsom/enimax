@@ -59,6 +59,24 @@ function normalise(x) {
     return x;
 }
 
+async function MakeFetchTimeout(url, options = {}, timeout = 5000) {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    options.signal = signal;
+    return new Promise(function (resolve, reject) {
+        fetch(url, options).then(response => response.text()).then((response) => {
+            resolve(response);
+        }).catch(function (err) {
+            reject(err);
+        });
+
+        setTimeout(function(){
+            controller.abort();
+            reject(new Error("timeout"));
+        },timeout);
+    });
+}
+
 window.onmessage = function (x) {
     if (parseInt(x.data.action) == 200) {
         token = x.data.data;
@@ -206,6 +224,9 @@ function ini() {
                 tempDiv.className = 'episodesCon';
                 tempDiv.setAttribute('data-url', animeEps[i].link);
 
+                if(animeEps[i].id){
+                    tempDiv.setAttribute('data-number', animeEps[i].id);
+                }
 
 
 
@@ -353,7 +374,7 @@ function ini() {
                         tempDiv.append(horizontalConT);
 
                         let horizontalConD;
-                        if(animeEps[i].description){
+                        if(true){
                             horizontalConD = createElement({
                                 "class": "hozCon",
                                 "style" : {
@@ -537,6 +558,41 @@ function ini() {
             }
 
             window.parent.apiCall("POST", { "username": username, "action": 5, "name": data.mainName, "img": data.image, "url": location.search }, (x) => { });
+
+            if(data.malID){
+                let malID = data.malID;
+                MakeFetchTimeout(`https://api.enime.moe/mapping/mal/${malID}`, {}, 60000).then(function(enimeData){
+                    let start = performance.now();
+
+                    let thumbnails = {};
+                    let thumbnailsTemp = JSON.parse(enimeData).episodes;
+                    for(let i = 0; i < thumbnailsTemp.length; i++){
+                        thumbnails[thumbnailsTemp[i].number] = thumbnailsTemp[i];
+                    }
+
+
+                    for(let elem of document.getElementsByClassName("episodesCon")){
+                        let dataNumber = parseInt(elem.getAttribute("data-number"));
+                        if(dataNumber in thumbnails){
+                            try{
+                                if(thumbnails[dataNumber].image){
+                                    elem.children[0].children[0].children[1].src = thumbnails[dataNumber].image;
+                                }
+                                elem.children[2].children[0].innerText =  thumbnails[dataNumber].description;
+
+                                let title = elem.children[1].children[0].innerText;
+                                elem.children[1].children[0].innerText =  title + " - " + (thumbnails[dataNumber].title);
+                            }catch(err){
+
+                            }
+                        }
+                    }
+
+                    alert(performance.now() - start);
+                }).catch(function(err){
+                    console.error(err);
+                });
+            }
             window.parent.apiCall("POST", { "username": username, "action": 2, "name": data.mainName, "fallbackDuration" : true}, (epData) => {
                 let episodes = {};
                 for(let ep of epData.data){
@@ -557,8 +613,6 @@ function ini() {
                         }
                     }
                 }
-
-                console.log(episodes);
 
 
                 for(let elem of document.getElementsByClassName("episodesCon")){

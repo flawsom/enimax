@@ -655,17 +655,6 @@ var animixplay = {
                     temp2.remove();
                 }
 
-                let thumbnails = {};
-                if(malId !== null){
-                    try{
-                        let thumbnailsTemp = JSON.parse(await MakeFetchTimeout(`https://api.enime.moe/mapping/mal/${malId}`, {}, 4000)).episodes;
-                        for(let i = 0; i < thumbnailsTemp.length; i++){
-                            thumbnails[thumbnailsTemp[i].number] = thumbnailsTemp[i];
-                        }
-                    }catch(err){
-        
-                    }
-                }
                 let animeEps = [];
                 let animeDOM = JSON.parse(temp.querySelector("#epslistplace").innerHTML);
                 let animeName;
@@ -681,18 +670,8 @@ var animixplay = {
                         let tempEp = {
                             "link": "?watch=" + ogURL + "/ep" + value + "&engine=1",
                             "title": `Episode ${parseFloat(value) + 1}`,
+                            "id": parseFloat(value) + 1,
                         };
-
-                        try{
-                            let epIndex = parseFloat(value) + 1;
-                            if(epIndex in thumbnails){
-                                tempEp.thumbnail = thumbnails[epIndex].image;
-                                tempEp.title = "Episode " + epIndex + " - " + thumbnails[epIndex].title;
-                                tempEp.description = thumbnails[epIndex].description;
-                            }
-                        }catch(err){
-            
-                        }
                         
                         animeEps.push(tempEp);
 
@@ -707,6 +686,10 @@ var animixplay = {
 
                 data.episodes = animeEps;
                 data.mainName = animeName;
+
+                if(malId){
+                    data.malID = malId;
+                }
                 temp.remove();
                 resolve(data);
             }).catch(function (err) {
@@ -1429,46 +1412,8 @@ var zoro = {
         response.mainName = name;
 
         ogDOM.remove();
-
-        let thumbnails = {};
-        let promises = [];
         let res;
         let check = false;
-        if(malID !== null){
-            try{
-
-                let thumbnailsTemp = [];
-
-                if(settled){
-                    promises.push(MakeFetchTimeout(`https://api.enime.moe/mapping/mal/${malID}`, {}, 4000));
-                    promises.push(MakeFetch(`https://zoro.to/ajax/v2/episode/list/${id}`, {}));
-
-                    let responses = await Promise.allSettled(promises);
-
-                    try{
-                        if(responses[0].status === "fulfilled"){
-                            thumbnailsTemp = JSON.parse(responses[0].value).episodes;
-                        }
-                    }catch(err){
-
-                    }
-
-
-                    if(responses[1].status === "fulfilled"){
-                        res = responses[1].value;
-                        check = true;
-                    }
-                }else{
-                    thumbnailsTemp = JSON.parse(await MakeFetchTimeout(`https://api.enime.moe/mapping/mal/${malID}`, {}, 4000)).episodes;
-                }
-
-                for(let i = 0; i < thumbnailsTemp.length; i++){
-                    thumbnails[thumbnailsTemp[i].number] = thumbnailsTemp[i];
-                }
-            }catch(err){
-                console.error(err);
-            }
-        }
         
         if(!check){
             res = (await MakeFetch(`https://zoro.to/ajax/v2/episode/list/${id}`, {}));
@@ -1486,24 +1431,17 @@ var zoro = {
         for (var i = 0; i < dom.length; i++) {
             let tempEp = {
                 "link": dom[i].getAttribute("href").replace("/watch/", "?watch=").replace("?ep=", "&ep=") + "&engine=3",
-                "id": dom[i].getAttribute("data-id"),
+                "id": dom[i].getAttribute("data-number"),
                 "title": "Episode " + dom[i].getAttribute("data-number"),
             };
-
-            try{
-                let epIndex = parseFloat(dom[i].getAttribute("data-number"));
-                if(epIndex in thumbnails){
-                    tempEp.thumbnail = thumbnails[epIndex].image;
-                    tempEp.title = "Episode " + epIndex + " - " + thumbnails[epIndex].title;
-                    tempEp.description = thumbnails[epIndex].description;
-                }
-            }catch(err){
-
-            }
 
             data.push(tempEp);
 
 
+        }
+
+        if(malID){
+            response.malID = malID;
         }
 
         ogDOM.remove();
