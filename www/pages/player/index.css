@@ -455,42 +455,6 @@ div {
     border-radius: 10px;
 }
 
-.range-input {
-
-    height: 30px;
-    display: inline-block;
-    background-color: #eee;
-    padding: 10px 20px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    align-items: center;
-    border-radius: 10px;
-}
-
-.range-input input {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 200px;
-    height: 2px;
-    background-color: #4471ef;
-    outline: none;
-}
-
-.range-input input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background-color: #eee;
-    border: 2px solid #4471ef;
-    border-radius: 50%;
-    outline: none;
-}
-
-.range-input input::-webkit-slider-thumb:hover {
-    background-color: #4471ef;
-}
-
 #setting_con_main {
     position: absolute;
     bottom: 0;
