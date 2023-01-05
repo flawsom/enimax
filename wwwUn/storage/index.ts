@@ -239,52 +239,71 @@ function toFormData(x) {
 }
 
 
-function makeRequest(method, url, form, timeout) : Promise<{[key : string] : string}> {
-    return new Promise(function (resolve, reject) {
-        let formation = {};
-        formation.method = method
+function makeRequest(method, url, form, timeout) : Promise<string> {
+    return new Promise(async function (resolve, reject) {
 
-        if (method == "POST") {
-            formation.body = toFormData(form);
-        }
+        if(config.ios){
+            let options = {
+                method : method,
+                data : form,
+                headers : {
+                    "x-session" : token
+                }
+            }
 
-        if (token) {
-            formation.headers = {};
-            formation.headers["x-session"] = token;
-        }
+            try{
+                let response = await MakeCusReq(url, options);
+                resolve(JSON.parse(response));
+            }catch(err){
+                reject(err);
+            }
+            
+        }else{
+            let formation = {};
+            formation.method = method
 
-        let controller, timeoutId;
-        if (timeout) {
-            controller = new AbortController();
-            timeoutId = setTimeout(() => {
-                controller.abort();
-            }, 3000);
+            if (method == "POST") {
+                formation.body = toFormData(form);
+            }
 
-            formation.signal = controller.signal;
+            if (token) {
+                formation.headers = {};
+                formation.headers["x-session"] = token;
+            }
 
-        }
-
-
-
-        fetch(url, formation).then(response => response.json()).then(function (x) {
+            let controller, timeoutId;
             if (timeout) {
-                clearTimeout(timeoutId);
-            }
+                controller = new AbortController();
+                timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 3000);
 
-            if (x.status == 200) {
-                resolve(x);
-            } else if ("errorCode" in x && x["errorCode"] == 70001) {
-                window.parent.postMessage({ "action": 21, data: "" }, "*");
-                reject(x.message);
+                formation.signal = controller.signal;
 
             }
-            else {
-                reject(x.message);
-            }
-        }).catch(function (error) {
-            console.error(error);
-            reject(error);
-        });
+
+
+
+            fetch(url, formation).then(response => response.json()).then(function (x) {
+                if (timeout) {
+                    clearTimeout(timeoutId);
+                }
+
+                if (x.status == 200) {
+                    resolve(x);
+                } else if ("errorCode" in x && x["errorCode"] == 70001) {
+                    window.parent.postMessage({ "action": 21, data: "" }, "*");
+                    reject(x.message);
+
+                }
+                else {
+                    reject(x.message);
+                }
+            }).catch(function (error) {
+                console.error(error);
+                reject(error);
+            });
+        }
     });
 }
 
