@@ -106,8 +106,10 @@ function checkIfExists(localURL : string, dList : Array<string>, dName : string)
 }
 
 function ini() {
-    let downloadQueue = (<cordovaWindow>window.parent).returnDownloadQueue();
-
+    let downloadQueue;
+    if(!config.ios){
+        downloadQueue = (<cordovaWindow>window.parent).returnDownloadQueue();
+    }
     let username = "hi";
 
     if (location.search.indexOf("?watch=/") > -1 || localStorage.getItem("offline") === 'true') {
@@ -118,9 +120,9 @@ function ini() {
         let currentEngine;
         let temp3 = main_url.split("&engine=");
         if (temp3.length == 1) {
-            currentEngine = extensionList[0];
+            currentEngine = 0;
         } else {
-            currentEngine = extensionList[parseInt(temp3[1])];
+            currentEngine = parseInt(temp3[1]);
         }
 
 
@@ -134,7 +136,7 @@ function ini() {
             let scrollToDOM;
             var a = document.getElementsByClassName("card_con");
             document.getElementById("updateImage").style.display = "inline-block";
-            if (!config.chrome) {
+            if (!config.chrome && !config.ios) {
                 document.getElementById("downloadAll").style.display = "inline-block";
             }
             document.getElementById("copyLink").style.display = "inline-block";
@@ -150,22 +152,37 @@ function ini() {
                 window.prompt("Copy it from below:", data.image);
             };
 
-            document.getElementById("updateLink").onclick = function () {
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 14, "name": data.mainName, "url": location.search }, (x) => {
-                    sendNoti([2, "", "Alert", "Done!"]);
-
+            document.getElementById("updateLink").onclick = async function () {
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" : { 
+                        "username": username, 
+                        "action": 14, 
+                        "name": data.mainName, 
+                        "url": location.search 
+                    }
                 });
+
+                sendNoti([2, "", "Alert", "Done!"]);
             };
 
 
-            document.getElementById("updateImage").onclick = function () {
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 9, "name": data.mainName, "img": data.image }, (x) => {
-                    sendNoti([2, "", "Alert", "Done!"]);
+            document.getElementById("updateImage").onclick = async function () {
+
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" : { 
+                        "username": username, 
+                        "action": 9, 
+                        "name": data.mainName, 
+                        "img": data.image 
+                    }
                 });
+                sendNoti([2, "", "Alert", "Done!"]);
             };
 
             let downloadedList = [];
-            if (!config.chrome) {
+            if (!config.chrome && !config.ios) {
                 try {
                     downloadedList = await (<cordovaWindow>window.parent).listDir(data.mainName);
                     let tempList = [];
@@ -228,7 +245,7 @@ function ini() {
 
 
                 let check = false;
-                if (!config.chrome) {
+                if (!config.chrome && !config.ios) {
 
                     try {
                         await checkIfExists(`/${data.mainName}/${btoa(normalise(trr))}/.downloaded`, downloadedList, btoa(normalise(trr)));
@@ -283,7 +300,7 @@ function ini() {
                     window.parent.postMessage({ "action": 4, "data": trr }, "*");
                 };
 
-                if (check || !downloaded || config.chrome) {
+                if (check || !downloaded || config.chrome || config.ios) {
                     
 
                     
@@ -343,7 +360,7 @@ function ini() {
                             "class": "episodesTitleTemp"
                         }));
 
-                        if (!config.chrome) {
+                        if (!config.chrome && !config.ios) {
                             horizontalCon.append(tempDiv4);
                         }
                         tempDiv.append(horizontalCon);
@@ -401,7 +418,7 @@ function ini() {
                         }    
                         tempDiv.append(tempDiv2);
                         tempDiv.append(tempDiv3);
-                        if (!config.chrome) {
+                        if (!config.chrome && !config.ios) {
                             tempDiv.append(tempDiv4);
                         }
                         // epCon.append(tempDiv);
@@ -484,7 +501,7 @@ function ini() {
 
             }
 
-            if (scrollToDOM && !config.chrome) {
+            if (scrollToDOM && !config.chrome && !config.ios) {
                 document.getElementById("downloadNext").style.display = "inline-block";
                 document.getElementById("downloadNext").onclick = function () {
                     let howmany = parseInt(prompt("How many episodes do you want to download?", "5"));
@@ -519,20 +536,28 @@ function ini() {
                 data.image = "https://raw.githubusercontent.com/enimax-anime/enimax/main/www/assets/images/placeholder.jpg";
             }
 
-            (<cordovaWindow> window.parent).apiCall("POST", { 
-                "username": username, 
-                "action": 5, 
-                "name": data.mainName, 
-                "img": data.image, 
-                "url": location.search 
-            }, () => {});
 
-            (<cordovaWindow> window.parent).apiCall("POST", { 
-                "username": username, 
-                "action": 2, 
-                "name": data.mainName, 
-                "fallbackDuration" : true
-            }, (epData) => {
+            postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" : { 
+                    "username": username, 
+                    "action": 5, 
+                    "name": data.mainName, 
+                    "img": data.image, 
+                    "url": location.search 
+                }
+            });
+
+            postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" : { 
+                    "username": username, 
+                    "action": 5, 
+                    "name": data.mainName, 
+                    "img": data.image, 
+                    "url": location.search 
+                }
+            }).then((epData) => {
                 let episodes = {};
                 for(let ep of epData.data){
                     console.log(epData);
@@ -588,7 +613,7 @@ function ini() {
                     }
                 }
 
-            });
+            }).catch((error) => console.error(error));
         }
 
 
@@ -604,12 +629,14 @@ function ini() {
             });
 
         } else {
-            currentEngine.getAnimeInfo(main_url).then(function (data) {
+            postMessagePromise(window.parent, {
+                action : "infoExtension",
+                value: main_url,
+                engine : currentEngine
+            }).then(function (data : extensionInfo) {
                 processEpisodeData(data, false, main_url);
-
             }).catch(function (err) {
                 console.error(err);
-
                 alert(err);
             });
         }
