@@ -275,6 +275,15 @@ async function MakeCusReq(url : string, options : RequestOption) : Promise<strin
     });
 }
 
+async function MakeFetch(url : string, options : {[key : string] : string}) {
+    return new Promise(function (resolve, reject) {
+        fetch(url, options).then(response => response.text()).then((response) => {
+            resolve(response);
+        }).catch(function (err) {
+            reject(err);
+        });
+    });
+}
 
 if (config.chrome) {
 

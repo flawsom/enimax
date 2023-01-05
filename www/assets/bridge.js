@@ -200,6 +200,15 @@ async function MakeCusReq(url, options) {
         });
     });
 }
+async function MakeFetch(url, options) {
+    return new Promise(function (resolve, reject) {
+        fetch(url, options).then(response => response.text()).then((response) => {
+            resolve(response);
+        }).catch(function (err) {
+            reject(err);
+        });
+    });
+}
 if (config.chrome) {
     playerIFrame.onload = function () {
         if (playerIFrame.contentWindow.location.href.includes("www/fallback.html")) {
