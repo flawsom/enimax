@@ -269,7 +269,47 @@ function removeDirectory(url) {
     });
 }
 function exec_action(x, reqSource) {
-    if (x.action == 1) {
+    if (x.action == "returnExNames") {
+        reqSource.postMessage({
+            "id": x.id,
+            "data": extensionNames
+        }, "*");
+    }
+    else if (x.action == "returnExDis") {
+        reqSource.postMessage({
+            "id": x.id,
+            "data": extensionDisabled
+        }, "*");
+    }
+    else if (x.action == "searchExtension") {
+        extensionList[x.engine].searchApi(x.value).then(function (response) {
+            reqSource.postMessage({
+                id: x.id,
+                data: response
+            }, "*");
+        }).catch(function (error) {
+            reqSource.postMessage({
+                id: x.id,
+                errored: true,
+                message: error
+            }, "*");
+        });
+    }
+    else if (x.action == "apiCall") {
+        apiCall("POST", x.data, () => { }).then(function (response) {
+            reqSource.postMessage({
+                id: x.id,
+                data: response
+            }, "*");
+        }).catch(function (error) {
+            reqSource.postMessage({
+                id: x.id,
+                errored: true,
+                message: error
+            }, "*");
+        });
+    }
+    else if (x.action == 1) {
         screen.orientation.lock(x.data).then(function () {
         }).catch(function (error) {
         });

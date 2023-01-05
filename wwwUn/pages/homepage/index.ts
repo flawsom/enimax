@@ -40,7 +40,10 @@ async function populateDownloadedArray() {
 
 async function testIt(idx = -1) : Promise<void> {
     let extensionList = (<cordovaWindow>window.parent).returnExtensionList();
-    let extensionNames = (<cordovaWindow>window.parent).returnExtensionNames();
+    let extensionNames = await postMessagePromise(window.parent, {
+        "action": "returnExNames"
+    });
+
     let searchQuery = "odd";
     let errored = false;
     for (let i = 0; i < extensionList.length; i++) {
@@ -475,8 +478,11 @@ if (localStorage.getItem("offline") === 'true') {
 
 }
 
-document.getElementById("resetSource").onclick = function () {
-    const extensionNames = (<cordovaWindow>window.parent).returnExtensionNames();
+document.getElementById("resetSource").onclick = async function () {
+    const extensionNames : Array<string> = await postMessagePromise(window.parent, {
+        "action": "returnExNames"
+    }) as any;
+
     let message = `What extension's source do you want to reset?\n`;
     for (let i = 0; i < extensionNames.length; i++) {
         message += `${i}. ${extensionNames[i]}\n`;
@@ -988,7 +994,10 @@ function makeDiscoverCard(data, engine, engineName) {
 }
 async function populateDiscover() {
     let extensionList = (<cordovaWindow>window.parent).returnExtensionList();
-    let extensionNames = (<cordovaWindow>window.parent).returnExtensionNames();
+    let extensionNames = await postMessagePromise(window.parent, {
+        "action": "returnExNames"
+    });
+
     let disCon = document.getElementById("discoverCon");
     let parents = [];
     let exTitle = [];
@@ -1340,86 +1349,159 @@ if (true) {
 
 
     var api = {
-        add_room: () => {
+        add_room: async () => {
             let data_in = (document.getElementById("pass_f") as HTMLInputElement).value;
             document.getElementById("room_con").style.display = 'none';
-            (<cordovaWindow>window.parent).apiCall("POST", { "action": 10, "username": username, "room": data_in }, getUserInfo);
+            
+            await postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" : {
+                    "action": 10, 
+                    "username": username, 
+                    "room": data_in 
+                }
+            });
+
+            getUserInfo();
         },
 
-        delete_room: (domelem) => {
+        delete_room: async (domelem) => {
             if (confirm("Are you sure you want to delete this card?")) {
                 let room_id = domelem.getAttribute("data-roomid");
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 12, "id": room_id }, getUserInfo);
 
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" : { 
+                        "username": username, 
+                        "action": 12, 
+                        "id": room_id 
+                    }
+                });
+                
+                getUserInfo();
 
             }
 
 
         },
 
-        change_order: () => {
+        change_order: async () => {
 
             let room_temp = getCurrentOrder();
-            (<cordovaWindow>window.parent).apiCall("POST", { "action": 13, "username": username, "order": room_temp }, getUserInfo);
+            await postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" : {
+                    "action": 13, 
+                    "username": username, 
+                    "order": room_temp 
+                }
+            });
 
+            getUserInfo();
         },
 
-        change_state: (domelem) => {
+        change_state: async (domelem) => {
             let state = domelem.getAttribute("data-roomid");
-            (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 7, "name": selectedShow, "state": state }, getUserInfo);
+
+            await postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" :  { 
+                    "username": username, 
+                    "action": 7, 
+                    "name": selectedShow, 
+                    "state": state 
+                }
+            });
+
+            getUserInfo();
 
         },
 
-        change_image_card: (name, domelem) => {
+        change_image_card: async (name, domelem) => {
 
 
             var img_url_prompt = prompt("Enter the URL of the image", domelem.getAttribute("data-bg1"));
             var main_url_prompt = prompt("Enter the URL of the page", domelem.getAttribute("data-main-link"));
-
+            let shouldRefresh = false;
             if (img_url_prompt != "" && img_url_prompt != null && img_url_prompt != undefined) {
                 img_url_prompt = img_url_prompt;
 
 
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 9, "name": name, "img": img_url_prompt }, getUserInfo, [domelem, img_url_prompt]);
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" :  { 
+                        "username": username, 
+                        "action": 9, 
+                        "name": name, 
+                        "img": img_url_prompt 
+                    }
+                });
 
-
-
-
+                shouldRefresh = true;
             }
 
 
             if (main_url_prompt != "" && main_url_prompt != null && main_url_prompt != undefined) {
 
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 14, "name": name, "url": main_url_prompt }, change_url_callback, [domelem]);
+               await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" :  { 
+                        "username": username, 
+                        "action": 14, 
+                        "name": name, 
+                        "url": main_url_prompt 
+                    }
+                });
 
+
+                shouldRefresh = true;
 
 
 
             }
 
+            if(shouldRefresh){
+                getUserInfo();
+            }
 
 
 
         },
 
-        delete_card: (x, domelem) => {
+        delete_card: async(x, domelem) => {
 
 
 
             if (confirm("Are you sure you want to delete this show from your watched list?")) {
-                (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 6, "name": x }, delete_card_callback, [domelem]);
 
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data" :  { 
+                        "username": username, 
+                        "action": 6, 
+                        "name": x 
+                    }
+                });
 
+                domelem.parentElement.parentElement.parentElement.remove();
 
             }
 
         },
 
 
-        get_userinfo: () => {
+        get_userinfo: async () => {
             permNoti = sendNoti([0, null, "Message", "Syncing with the server..."]);
 
-            (<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 4 }, get_userinfo_callback, []);
+            let response = await postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data" :  { 
+                    "username": username, 
+                    "action": 4 
+                }
+            });
+
+            get_userinfo_callback(response);
 
 
         }
@@ -1427,7 +1509,7 @@ if (true) {
     }
 
 
-    function change_image_callback(x, y, z) {
+    function change_image_callback(x, z) {
 
         x.setAttribute("data-bg1", z.data.image);
         x.parentElement.parentElement.parentElement.style.backgroundImage = "url('" + z.data.image + "')";
@@ -1598,7 +1680,9 @@ if (true) {
         updateRoomDis();
         updateRoomAdd();
         addCustomRoom();
-        let extensionNames = (<cordovaWindow>window.parent).returnExtensionNames();
+        let extensionNames = await postMessagePromise(window.parent, {
+            "action": "returnExNames"
+        });
 
         if (!offlineMode) {
             let updateLibCon = createElement({

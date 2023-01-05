@@ -1,5 +1,5 @@
 if (config.local) {
-    window.location = "index.html";
+    // window.location = "index.html";
 }
 
 var secureStorageVar;

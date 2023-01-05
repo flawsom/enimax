@@ -354,8 +354,58 @@ function removeDirectory(url : string) {
 }
 
 function exec_action(x : MessageAction, reqSource : Window) {
+    if (x.action == "returnExNames") {
 
-    if (x.action == 1) {
+        reqSource.postMessage({
+            "id" : x.id,
+            "data" : extensionNames
+        }, "*")
+    }
+    else if (x.action == "returnExDis") {
+
+        reqSource.postMessage({
+            "id" : x.id,
+            "data" : extensionDisabled
+        }, "*")
+    }
+    else if (x.action == "searchExtension") {
+
+
+        extensionList[x.engine].searchApi(x.value).then(function (response) {
+            reqSource.postMessage({
+                id : x.id,
+                data: response
+
+            }, "*");
+        }).catch(function (error) {
+            reqSource.postMessage({
+                id : x.id,
+                errored: true,
+                message : error
+            }, "*");
+        });
+    }
+    else if (x.action == "apiCall") {
+        apiCall("POST", x.data, () => {}).then(function(response){
+            reqSource.postMessage({
+                id : x.id,
+                data: response
+            }, "*");
+        }).catch(function(error){
+            reqSource.postMessage({
+                id : x.id,
+                errored: true,
+                message : error
+            }, "*");
+        });
+    }
+    else if (x.action == "getLocalStorage") {
+        reqSource.postMessage({
+            "id" : x.id,
+            "data" : localStorage.getItem(x.data);
+        }, "*");
+    }
+    else if (x.action == 1) {
 
         screen.orientation.lock(x.data).then(function () {
 

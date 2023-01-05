@@ -121,7 +121,6 @@ interface cordovaWindow extends Window {
     apiCall: Function,
     returnExtensionList: Function,
     XMLHttpRequest: any,
-    returnExtensionNames: Function,
     returnDownloadQueue: Function,
     returnExtensionDisabled: Function,
     listDir: Function,
@@ -265,7 +264,8 @@ interface EnimaxConfig {
     "chrome": boolean,
     "firefox": boolean,
     "beta": boolean,
-    "sockets": boolean
+    "sockets": boolean,
+    "ios" : boolean
 }
 
 interface downloadMapping {

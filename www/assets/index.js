@@ -74,3 +74,29 @@ const backgroundGradients = [
     "linear-gradient(to bottom, #ec008c, #fc6767)",
     "linear-gradient(to bottom, #ffd89b, #19547b)"
 ];
+let reqID = 0;
+let reqPromises = {};
+window.addEventListener("message", function (response) {
+    if (!("id" in response.data) || !(response.data.id in reqPromises)) {
+        return;
+    }
+    let responseID = response.data.id;
+    if (response.data.errored) {
+        reqPromises[responseID].reject(new Error(response.data.message));
+    }
+    else {
+        reqPromises[responseID].resolve(response.data.data);
+    }
+    delete reqPromises[responseID];
+});
+function postMessagePromise(parent, data) {
+    data.id = ++reqID;
+    console.log(data);
+    return (new Promise(function (resolve, reject) {
+        reqPromises[reqID] = {
+            resolve,
+            reject,
+        };
+        parent.postMessage(data, "*");
+    }));
+}

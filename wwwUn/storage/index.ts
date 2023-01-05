@@ -322,6 +322,7 @@ async function apiCall(method, form, callback, args = [], timeout = false) {
 
     } catch (err) {
         sendNoti([2, null, "Alert", err]);
+        throw new Error("Error");
 
     }
 

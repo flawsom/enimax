@@ -3,6 +3,7 @@ var config = {
     "remote": localStorage.getItem("remote"),
     "remoteWOport": localStorage.getItem("remoteWOport"),
     "chrome": false,
+    "ios": true,
     "firefox": false,
     "beta": false,
     "sockets": false
