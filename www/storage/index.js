@@ -182,42 +182,60 @@ function toFormData(x) {
     return form;
 }
 function makeRequest(method, url, form, timeout) {
-    return new Promise(function (resolve, reject) {
-        let formation = {};
-        formation.method = method;
-        if (method == "POST") {
-            formation.body = toFormData(form);
+    return new Promise(async function (resolve, reject) {
+        if (config.ios) {
+            let options = {
+                method: method,
+                data: form,
+                headers: {
+                    "x-session": token
+                }
+            };
+            try {
+                let response = await MakeCusReq(url, options);
+                resolve(JSON.parse(response));
+            }
+            catch (err) {
+                reject(err);
+            }
         }
-        if (token) {
-            formation.headers = {};
-            formation.headers["x-session"] = token;
-        }
-        let controller, timeoutId;
-        if (timeout) {
-            controller = new AbortController();
-            timeoutId = setTimeout(() => {
-                controller.abort();
-            }, 3000);
-            formation.signal = controller.signal;
-        }
-        fetch(url, formation).then(response => response.json()).then(function (x) {
+        else {
+            let formation = {};
+            formation.method = method;
+            if (method == "POST") {
+                formation.body = toFormData(form);
+            }
+            if (token) {
+                formation.headers = {};
+                formation.headers["x-session"] = token;
+            }
+            let controller, timeoutId;
             if (timeout) {
-                clearTimeout(timeoutId);
+                controller = new AbortController();
+                timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 3000);
+                formation.signal = controller.signal;
             }
-            if (x.status == 200) {
-                resolve(x);
-            }
-            else if ("errorCode" in x && x["errorCode"] == 70001) {
-                window.parent.postMessage({ "action": 21, data: "" }, "*");
-                reject(x.message);
-            }
-            else {
-                reject(x.message);
-            }
-        }).catch(function (error) {
-            console.error(error);
-            reject(error);
-        });
+            fetch(url, formation).then(response => response.json()).then(function (x) {
+                if (timeout) {
+                    clearTimeout(timeoutId);
+                }
+                if (x.status == 200) {
+                    resolve(x);
+                }
+                else if ("errorCode" in x && x["errorCode"] == 70001) {
+                    window.parent.postMessage({ "action": 21, data: "" }, "*");
+                    reject(x.message);
+                }
+                else {
+                    reject(x.message);
+                }
+            }).catch(function (error) {
+                console.error(error);
+                reject(error);
+            });
+        }
     });
 }
 async function apiCall(method, form, callback, args = [], timeout = false) {
