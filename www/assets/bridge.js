@@ -200,15 +200,6 @@ async function MakeCusReq(url, options) {
         });
     });
 }
-async function MakeFetch(url, options) {
-    return new Promise(function (resolve, reject) {
-        fetch(url, options).then(response => response.text()).then((response) => {
-            resolve(response);
-        }).catch(function (err) {
-            reject(err);
-        });
-    });
-}
 if (config.chrome) {
     playerIFrame.onload = function () {
         if (playerIFrame.contentWindow.location.href.includes("www/fallback.html")) {
@@ -288,6 +279,22 @@ function exec_action(x, reqSource) {
                 data: response
             }, "*");
         }).catch(function (error) {
+            reqSource.postMessage({
+                id: x.id,
+                errored: true,
+                message: error
+            }, "*");
+        });
+    }
+    else if (x.action == "infoExtension") {
+        extensionList[x.engine].searchApi(x.value).then(function (response) {
+            console.log(response);
+            reqSource.postMessage({
+                id: x.id,
+                data: response
+            }, "*");
+        }).catch(function (error) {
+            console.log(error);
             reqSource.postMessage({
                 id: x.id,
                 errored: true,

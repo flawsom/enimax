@@ -86,7 +86,10 @@ function checkIfExists(localURL, dList, dName) {
     }));
 }
 function ini() {
-    let downloadQueue = window.parent.returnDownloadQueue();
+    let downloadQueue;
+    if (!config.ios) {
+        downloadQueue = window.parent.returnDownloadQueue();
+    }
     let username = "hi";
     if (location.search.indexOf("?watch=/") > -1 || localStorage.getItem("offline") === 'true') {
         let main_url = location.search.replace("?watch=/", "");
@@ -94,10 +97,10 @@ function ini() {
         let currentEngine;
         let temp3 = main_url.split("&engine=");
         if (temp3.length == 1) {
-            currentEngine = extensionList[0];
+            currentEngine = 0;
         }
         else {
-            currentEngine = extensionList[parseInt(temp3[1])];
+            currentEngine = parseInt(temp3[1]);
         }
         async function processEpisodeData(data, downloaded, main_url) {
             let currentLink = '';
@@ -107,7 +110,7 @@ function ini() {
             let scrollToDOM;
             var a = document.getElementsByClassName("card_con");
             document.getElementById("updateImage").style.display = "inline-block";
-            if (!config.chrome) {
+            if (!config.chrome && !config.ios) {
                 document.getElementById("downloadAll").style.display = "inline-block";
             }
             document.getElementById("copyLink").style.display = "inline-block";
@@ -119,18 +122,32 @@ function ini() {
             document.getElementById("copyImage").onclick = function () {
                 window.prompt("Copy it from below:", data.image);
             };
-            document.getElementById("updateLink").onclick = function () {
-                window.parent.apiCall("POST", { "username": username, "action": 14, "name": data.mainName, "url": location.search }, (x) => {
-                    sendNoti([2, "", "Alert", "Done!"]);
+            document.getElementById("updateLink").onclick = async function () {
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data": {
+                        "username": username,
+                        "action": 14,
+                        "name": data.mainName,
+                        "url": location.search
+                    }
                 });
+                sendNoti([2, "", "Alert", "Done!"]);
             };
-            document.getElementById("updateImage").onclick = function () {
-                window.parent.apiCall("POST", { "username": username, "action": 9, "name": data.mainName, "img": data.image }, (x) => {
-                    sendNoti([2, "", "Alert", "Done!"]);
+            document.getElementById("updateImage").onclick = async function () {
+                await postMessagePromise(window.parent, {
+                    "action": "apiCall",
+                    "data": {
+                        "username": username,
+                        "action": 9,
+                        "name": data.mainName,
+                        "img": data.image
+                    }
                 });
+                sendNoti([2, "", "Alert", "Done!"]);
             };
             let downloadedList = [];
-            if (!config.chrome) {
+            if (!config.chrome && !config.ios) {
                 try {
                     downloadedList = await window.parent.listDir(data.mainName);
                     let tempList = [];
@@ -174,7 +191,7 @@ function ini() {
                 tempDiv3.className = 'episodesTitle';
                 tempDiv3.innerText = animeEps[i].title;
                 let check = false;
-                if (!config.chrome) {
+                if (!config.chrome && !config.ios) {
                     try {
                         await checkIfExists(`/${data.mainName}/${btoa(normalise(trr))}/.downloaded`, downloadedList, btoa(normalise(trr)));
                         tempDiv4.className = 'episodesDownloaded';
@@ -213,7 +230,7 @@ function ini() {
                     localStorage.setItem("mainName", data.mainName);
                     window.parent.postMessage({ "action": 4, "data": trr }, "*");
                 };
-                if (check || !downloaded || config.chrome) {
+                if (check || !downloaded || config.chrome || config.ios) {
                     if (!downloaded) {
                         tempDiv.style.flexDirection = "column";
                         tempDiv2.remove();
@@ -256,7 +273,7 @@ function ini() {
                         horizontalCon.append(createElement({
                             "class": "episodesTitleTemp"
                         }));
-                        if (!config.chrome) {
+                        if (!config.chrome && !config.ios) {
                             horizontalCon.append(tempDiv4);
                         }
                         tempDiv.append(horizontalCon);
@@ -312,7 +329,7 @@ function ini() {
                         }
                         tempDiv.append(tempDiv2);
                         tempDiv.append(tempDiv3);
-                        if (!config.chrome) {
+                        if (!config.chrome && !config.ios) {
                             tempDiv.append(tempDiv4);
                         }
                         // epCon.append(tempDiv);
@@ -377,7 +394,7 @@ function ini() {
             }
             catch (err) {
             }
-            if (scrollToDOM && !config.chrome) {
+            if (scrollToDOM && !config.chrome && !config.ios) {
                 document.getElementById("downloadNext").style.display = "inline-block";
                 document.getElementById("downloadNext").onclick = function () {
                     let howmany = parseInt(prompt("How many episodes do you want to download?", "5"));
@@ -408,19 +425,26 @@ function ini() {
             if (!("image" in data) || data.image == undefined || data.image == null || data.image == "") {
                 data.image = "https://raw.githubusercontent.com/enimax-anime/enimax/main/www/assets/images/placeholder.jpg";
             }
-            window.parent.apiCall("POST", {
-                "username": username,
-                "action": 5,
-                "name": data.mainName,
-                "img": data.image,
-                "url": location.search
-            }, () => { });
-            window.parent.apiCall("POST", {
-                "username": username,
-                "action": 2,
-                "name": data.mainName,
-                "fallbackDuration": true
-            }, (epData) => {
+            postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data": {
+                    "username": username,
+                    "action": 5,
+                    "name": data.mainName,
+                    "img": data.image,
+                    "url": location.search
+                }
+            });
+            postMessagePromise(window.parent, {
+                "action": "apiCall",
+                "data": {
+                    "username": username,
+                    "action": 5,
+                    "name": data.mainName,
+                    "img": data.image,
+                    "url": location.search
+                }
+            }).then((epData) => {
                 let episodes = {};
                 for (let ep of epData.data) {
                     console.log(epData);
@@ -469,7 +493,7 @@ function ini() {
                         break;
                     }
                 }
-            });
+            }).catch((error) => console.error(error));
         }
         if (localStorage.getItem("offline") === 'true') {
             window.parent.makeLocalRequest("GET", `/${main_url.split("&downloaded")[0]}/info.json`).then(function (data) {
@@ -482,7 +506,11 @@ function ini() {
             });
         }
         else {
-            currentEngine.getAnimeInfo(main_url).then(function (data) {
+            postMessagePromise(window.parent, {
+                action: "infoExtension",
+                value: main_url,
+                engine: currentEngine
+            }).then(function (data) {
                 processEpisodeData(data, false, main_url);
             }).catch(function (err) {
                 console.error(err);
