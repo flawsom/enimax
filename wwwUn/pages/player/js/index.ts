@@ -1,5 +1,5 @@
 var CustomXMLHttpRequest = XMLHttpRequest;
-
+let appConfig = config;
 
 var username = "hi";
 let hls : any;
@@ -881,7 +881,7 @@ function chooseQual(config : sourceConfig) {
 		hls.destroy();
 	}
 
-	if (config.type == "hls") {
+	if (config.type == "hls" && !appConfig.ios) {
 		//@ts-ignore
 		if (Hls.isSupported()) {
 			//@ts-ignore
