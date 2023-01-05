@@ -1,5 +1,3 @@
-// @ts-ignore
-const extensionList = (<cordovaWindow>window.parent).returnExtensionList();
 
 if (config.local || localStorage.getItem("offline") === 'true') {
     ini();

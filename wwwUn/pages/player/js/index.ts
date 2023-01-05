@@ -2,8 +2,6 @@ var CustomXMLHttpRequest = XMLHttpRequest;
 
 
 var username = "hi";
-// @ts-ignore
-const extensionList = (<cordovaWindow>window.parent).returnExtensionList();
 let hls : any;
 let doubleTapTime = isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
 let skipButTime = isNaN(parseInt(localStorage.getItem("skipButTime"))) ? 30 : parseInt(localStorage.getItem("skipButTime"));
@@ -666,7 +664,18 @@ async function update(shouldCheck : number) {
 
 	updateCheck = 1;
 
-	(<cordovaWindow>window.parent).apiCall("POST", { "username": username, "action": 1, "time": currentTime, "ep": currentVidData.episode, "name": currentVidData.nameWSeason, "nameUm": currentVidData.name, "prog": currentDuration }, () => { }, [], true).then(function (response : any) {
+	postMessagePromise(window.parent, {
+		action : "apiCall",
+		data : { 
+			"username": username, 
+			"action": 1, 
+			"time": currentTime, 
+			"ep": currentVidData.episode, 
+			"name": currentVidData.nameWSeason, 
+			"nameUm": currentVidData.name, 
+			"prog": currentDuration 
+		}
+	}).then(function (response : any) {
 		try {
 			if (response.status == 200) {
 				lastUpdate = currentTime;
@@ -1048,15 +1057,18 @@ async function getEp(x = 0) {
 
 
 
-		let response = await (<cordovaWindow>window.parent).apiCall("POST", 
-			{ 
-				"username": username, 
-				"action": 2, 
-				"name": currentVidData.nameWSeason, 
-				"nameUm": currentVidData.name, 
-				"ep": currentVidData.episode, 
-				"cur": location.search
-			}, () => {});
+		let response = await postMessagePromise(window.parent, 
+			{
+				action : "apiCall",
+				data : { 
+					"username": username, 
+					"action": 2, 
+					"name": currentVidData.nameWSeason, 
+					"nameUm": currentVidData.name, 
+					"ep": currentVidData.episode, 
+					"cur": location.search
+				}
+			});
 
 
 		document.getElementById("ep_dis").innerHTML = currentVidData.episode.toString();
@@ -1172,7 +1184,7 @@ window.onmessage = async function (message: MessageEvent) {
 
 	if (message.data.action == 1) {
 		currentVidData = message.data;
-		if (config.chrome) {
+		if (config.chrome || config.ios) {
 			getEp();
 		} else {
 			let mainName = localStorage.getItem("mainName");
@@ -1276,16 +1288,18 @@ window.addEventListener("keydown", function (event) {
 
 window.addEventListener("videoDurationChanged", () => {
 	try {
-		(<cordovaWindow>window.parent).apiCall("POST", 
-		{ 
-			"username": username, 
-			"action": 2, 
-			"name": currentVidData.nameWSeason, 
-			"nameUm": currentVidData.name, 
-			"ep": currentVidData.episode, 
-			"duration": Math.floor(vidInstance.vid.duration), 
-			"cur": location.search 
-		}, () => {});
+		postMessagePromise(window.parent, {
+			action : "apiCall",
+			data : { 
+				"username": username, 
+				"action": 2, 
+				"name": currentVidData.nameWSeason, 
+				"nameUm": currentVidData.name, 
+				"ep": currentVidData.episode, 
+				"duration": Math.floor(vidInstance.vid.duration), 
+				"cur": location.search 
+			}
+		});
 	} catch (err) {
 		console.error(err);
 	}
