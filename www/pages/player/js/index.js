@@ -1,4 +1,5 @@
 var CustomXMLHttpRequest = XMLHttpRequest;
+let appConfig = config;
 var username = "hi";
 let hls;
 let doubleTapTime = isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
@@ -753,7 +754,7 @@ function chooseQual(config) {
     if (hls) {
         hls.destroy();
     }
-    if (config.type == "hls") {
+    if (config.type == "hls" && !appConfig.ios) {
         //@ts-ignore
         if (Hls.isSupported()) {
             //@ts-ignore
