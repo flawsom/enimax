@@ -83,13 +83,23 @@ function extractKey(id : number, url = null, useCached = false) : Promise<string
 }
 
 async function MakeFetch(url : string, options = {}) : Promise<string> {
-    return new Promise(function (resolve, reject) {
-        fetch(url, options).then(response => response.text()).then((response : string) => {
-            resolve(response);
-        }).catch(function (err) {
-            reject(err);
+    if(config.ios){
+        return new Promise(async function (resolve, reject) {
+            try{
+                resolve(await MakeCusReqFmovies(url, options));
+            }catch(err){
+                reject(err);
+            }
         });
-    });
+    }else{
+        return new Promise(function (resolve, reject) {
+            fetch(url, options).then(response => response.text()).then((response : string) => {
+                resolve(response);
+            }).catch(function (err) {
+                reject(err);
+            });
+        });
+    }
 }
 
 async function MakeFetchTimeout(url, options = {}, timeout = 5000) : Promise<string> {

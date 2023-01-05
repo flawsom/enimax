@@ -76,13 +76,25 @@ function extractKey(id, url = null, useCached = false) {
     }));
 }
 async function MakeFetch(url, options = {}) {
-    return new Promise(function (resolve, reject) {
-        fetch(url, options).then(response => response.text()).then((response) => {
-            resolve(response);
-        }).catch(function (err) {
-            reject(err);
+    if (config.ios) {
+        return new Promise(async function (resolve, reject) {
+            try {
+                resolve(await MakeCusReqFmovies(url, options));
+            }
+            catch (err) {
+                reject(err);
+            }
         });
-    });
+    }
+    else {
+        return new Promise(function (resolve, reject) {
+            fetch(url, options).then(response => response.text()).then((response) => {
+                resolve(response);
+            }).catch(function (err) {
+                reject(err);
+            });
+        });
+    }
 }
 async function MakeFetchTimeout(url, options = {}, timeout = 5000) {
     const controller = new AbortController();
