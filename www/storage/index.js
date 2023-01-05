@@ -192,8 +192,14 @@ function makeRequest(method, url, form, timeout) {
                 }
             };
             try {
-                let response = await MakeCusReq(url, options);
-                resolve(JSON.parse(response));
+                let response = JSON.parse(await MakeCusReq(url, options));
+                if ("errorCode" in response && response["errorCode"] == 70001) {
+                    window.parent.postMessage({ "action": 21, data: "" }, "*");
+                    reject(response.message);
+                }
+                else {
+                    resolve(JSON.parse(response));
+                }
             }
             catch (err) {
                 reject(err);
