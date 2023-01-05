@@ -1,7 +1,5 @@
 var CustomXMLHttpRequest = XMLHttpRequest;
 var username = "hi";
-// @ts-ignore
-const extensionList = window.parent.returnExtensionList();
 let hls;
 let doubleTapTime = isNaN(parseInt(localStorage.getItem("doubleTapTime"))) ? 5 : parseInt(localStorage.getItem("doubleTapTime"));
 let skipButTime = isNaN(parseInt(localStorage.getItem("skipButTime"))) ? 30 : parseInt(localStorage.getItem("skipButTime"));
@@ -576,7 +574,18 @@ async function update(shouldCheck) {
         return;
     }
     updateCheck = 1;
-    window.parent.apiCall("POST", { "username": username, "action": 1, "time": currentTime, "ep": currentVidData.episode, "name": currentVidData.nameWSeason, "nameUm": currentVidData.name, "prog": currentDuration }, () => { }, [], true).then(function (response) {
+    postMessagePromise(window.parent, {
+        action: "apiCall",
+        data: {
+            "username": username,
+            "action": 1,
+            "time": currentTime,
+            "ep": currentVidData.episode,
+            "name": currentVidData.nameWSeason,
+            "nameUm": currentVidData.name,
+            "prog": currentDuration
+        }
+    }).then(function (response) {
         try {
             if (response.status == 200) {
                 lastUpdate = currentTime;
@@ -887,14 +896,17 @@ async function getEp(x = 0) {
         else {
             document.getElementById("next_ep").style.display = "table-cell";
         }
-        let response = await window.parent.apiCall("POST", {
-            "username": username,
-            "action": 2,
-            "name": currentVidData.nameWSeason,
-            "nameUm": currentVidData.name,
-            "ep": currentVidData.episode,
-            "cur": location.search
-        }, () => { });
+        let response = await postMessagePromise(window.parent, {
+            action: "apiCall",
+            data: {
+                "username": username,
+                "action": 2,
+                "name": currentVidData.nameWSeason,
+                "nameUm": currentVidData.name,
+                "ep": currentVidData.episode,
+                "cur": location.search
+            }
+        });
         document.getElementById("ep_dis").innerHTML = currentVidData.episode.toString();
         clearInterval(updateCurrentTime);
         updateCurrentTime = window.setInterval(update, int_up);
@@ -983,7 +995,7 @@ document.querySelector("#setting_icon").addEventListener("click", function () {
 window.onmessage = async function (message) {
     if (message.data.action == 1) {
         currentVidData = message.data;
-        if (config.chrome) {
+        if (config.chrome || config.ios) {
             getEp();
         }
         else {
@@ -1092,15 +1104,18 @@ window.addEventListener("keydown", function (event) {
 });
 window.addEventListener("videoDurationChanged", () => {
     try {
-        window.parent.apiCall("POST", {
-            "username": username,
-            "action": 2,
-            "name": currentVidData.nameWSeason,
-            "nameUm": currentVidData.name,
-            "ep": currentVidData.episode,
-            "duration": Math.floor(vidInstance.vid.duration),
-            "cur": location.search
-        }, () => { });
+        postMessagePromise(window.parent, {
+            action: "apiCall",
+            data: {
+                "username": username,
+                "action": 2,
+                "name": currentVidData.nameWSeason,
+                "nameUm": currentVidData.name,
+                "ep": currentVidData.episode,
+                "duration": Math.floor(vidInstance.vid.duration),
+                "cur": location.search
+            }
+        });
     }
     catch (err) {
         console.error(err);

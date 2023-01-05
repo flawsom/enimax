@@ -287,7 +287,7 @@ function exec_action(x, reqSource) {
         });
     }
     else if (x.action == "infoExtension") {
-        extensionList[x.engine].searchApi(x.value).then(function (response) {
+        extensionList[x.engine].getAnimeInfo(x.value).then(function (response) {
             console.log(response);
             reqSource.postMessage({
                 id: x.id,
