@@ -309,6 +309,12 @@ function exec_action(x, reqSource) {
             }, "*");
         });
     }
+    else if (x.action == "getLocalStorage") {
+        reqSource.postMessage({
+            "id": x.id,
+            "data": localStorage.getItem(x.data)
+        }, "*");
+    }
     else if (x.action == 1) {
         screen.orientation.lock(x.data).then(function () {
         }).catch(function (error) {

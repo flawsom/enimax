@@ -1552,12 +1552,19 @@ if (true) {
         }
     }
     var ini_api = api;
-    if (config.local || localStorage.getItem("offline") === 'true') {
+    postMessagePromise(window.parent, {
+        "action": "getLocalStorage",
+        "data": "local"
+    }).then(function (value) {
+        if (value || localStorage.getItem("offline") === 'true') {
+            getUserInfo();
+        }
+        else {
+            window.parent.postMessage({ "action": 20, data: "" }, "*");
+        }
+    }).catch(function (error) {
         getUserInfo();
-    }
-    else {
-        window.parent.postMessage({ "action": 20, data: "" }, "*");
-    }
+    });
     // @ts-ignore
     new Sortable(document.getElementById("room_dis_child"), {
         animation: 150,
