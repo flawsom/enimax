@@ -63,7 +63,7 @@ jobs:
           node-version: 18
 
     - name: Uploading the APK to discord
-      run: node ./enimax/helper/uploader.js
+      run: npm install dotenv discord.js@14.11.0 && node ./enimax/helper/uploader.js
       env:
         TOKEN: ${{ secrets.TOKEN }}
         CHANNELID: ${{ secrets.CHANNELID }}
