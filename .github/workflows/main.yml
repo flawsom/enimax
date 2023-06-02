@@ -1,7 +1,7 @@
 name: Android Build
 on:
   push:
-    branches: [ "docker" ]
+    branches: [ "*" ]
   workflow_dispatch:
     inputs:
       name:
