@@ -15,7 +15,7 @@ async function ini(token, channelID, branch) {
     try {
         await discordClient.login(token);
         const channel = await discordClient.channels.fetch(channelID);
-        await channel.send("APK", {
+        await channel.send({
             content: `${branch} was updated.`,
             files: [
                 path.join(__dirname, "../../app-release.apk"),
