@@ -33,7 +33,7 @@ jobs:
     - name: Cloning the repo
       run: echo $BRANCH && docker exec enimax-build sh -c "(rm enimax -rf || echo 'Could not delete the folder') && git clone https://github.com/enimax-anime/enimax && cd enimax && git checkout docker"
       env: 
-        BRANCH:  ${{steps.branch-name.outputs.default_branch}}
+        BRANCH:  ${{steps.branch-name.outputs.current_branch}}
 
     - name: Copying the key and build.json
       run: |
@@ -41,7 +41,7 @@ jobs:
         docker cp ./key.jks enimax-build:/usr/src/key.jks
 
     - name: Building the app
-      run:  docker exec enimax-build sh -c "cd enimax && make cordova && make build"
+      run:  docker exec enimax-build sh -c "cd enimax && cat build.json && make cordova && make build"
 
     - name: Fetching the built APK
       run: docker cp enimax-build:/usr/src/enimax/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk ./      
