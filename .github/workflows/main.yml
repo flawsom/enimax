@@ -44,7 +44,7 @@ jobs:
       run:  docker exec enimax-build sh -c "cd enimax && make cordova && make build"
 
     - name: Fetching the built APK
-      run: docker cp enimax-build:/usr/src/enimax/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk ./      
+      run: docker cp enimax-build:/usr/src/enimax/platforms/android/app/build/outputs/apk/release/app-release.apk ./      
         
     - name: Upload the APK as an artifact
       uses: actions/upload-artifact@v3
