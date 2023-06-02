@@ -1,0 +1,47 @@
+name: Android Build
+on:
+  push:
+    branches: [ "docker" ]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "World"
+        default: "Hello"
+jobs:
+  build:
+    environment: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get branch name
+      id: branch-name
+      uses: tj-actions/branch-names@v7
+
+    - name: Saving the key and build.json
+      env:
+        KEY: ${{secrets.KEY}}
+        BUILDJSON: ${{secrets.BUILDJSON}}
+      run: |
+        echo ${{ secrets.KEY }} | base64 -d > key.jks
+        echo ${{ secrets.BUILDJSON }} > build.json
+
+    - name: Downloading the docker image
+      run: docker run  -t -d --name "enimax-build" -d enimaxanime/anime
+    
+    - name: Starting the container
+      run: docker start enimax-build
+
+    - name: Cloning the repo
+      run: echo $BRANCH && docker exec enimax-build sh -c "(rm enimax -rf || echo 'Could not delete the folder') && git clone https://github.com/enimax-anime/enimax"
+      env: 
+        BRANCH:  ${{steps.branch-name.outputs.default_branch}}
+    - name: Building the app
+      run:  docker exec enimax-build sh -c "cd enimax && JAVA_HOME=/usr/src/java ANDROID_HOME=/usr/lib/android-sdk  cordova build --release --device --no-telemetry"
+
+    - name: Fetching the built APK
+      run: docker cp enimax-build:/usr/src/enimax/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk ./      
+        
+    - name: Upload the APK as an artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release.apk
+        path: ./app-release-unsigned.apk
