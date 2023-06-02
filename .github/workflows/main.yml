@@ -41,7 +41,7 @@ jobs:
         docker cp ./key.jks enimax-build:/usr/src/key.jks
 
     - name: Building the app
-      run:  docker exec enimax-build sh -c "cd enimax && JAVA_HOME=/usr/src/java ANDROID_HOME=/usr/lib/android-sdk  cordova build --release --device --no-telemetry"
+      run:  docker exec enimax-build sh -c "cd enimax && make cordova && make build"
 
     - name: Fetching the built APK
       run: docker cp enimax-build:/usr/src/enimax/platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk ./      
