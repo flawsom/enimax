@@ -12,3 +12,4 @@ Makefile
 enimax-chrome-extension/
 test.js
 test.html
+Makefile.local
