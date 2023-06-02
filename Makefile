@@ -1,3 +1,7 @@
+cordova:
+	cd /usr/src/
+	cordova platform add android@9.0.0
+
 build:
 	make ts
 	JAVA_HOME=/usr/src/java ANDROID_HOME=/usr/lib/android-sdk  cordova build --release --device --no-telemetry
