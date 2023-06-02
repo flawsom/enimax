@@ -6,10 +6,10 @@ build:
 	make ts
 	JAVA_HOME=/usr/src/java ANDROID_HOME=/usr/lib/android-sdk  cordova build --release --device --no-telemetry
 
-docker build:
+docker-build:
 	docker build --tag=enimaxanime/anime:v1.0.0 .
 
-docker run:
+docker-run:
 	docker run -i -t b440a27ea6b4
 
 ts:
