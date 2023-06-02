@@ -22,7 +22,7 @@ jobs:
         BUILDJSON: ${{secrets.BUILDJSON}}
       run: |
         echo ${{ secrets.KEY }} | base64 -d > key.jks
-        echo ${{ secrets.BUILDJSON }} > build.json
+        echo ${{ secrets.BUILDJSON }} | base64 -d > build.json
 
     - name: Downloading the docker image
       run: docker run  -t -d --name "enimax-build" -d enimaxanime/anime
@@ -31,7 +31,7 @@ jobs:
       run: docker start enimax-build
 
     - name: Cloning the repo
-      run: echo $BRANCH && docker exec enimax-build sh -c "(rm enimax -rf || echo 'Could not delete the folder') && git clone https://github.com/enimax-anime/enimax && cd enimax && git checkout docker"
+      run: echo $BRANCH && docker exec enimax-build sh -c "(rm enimax -rf || echo 'Could not delete the folder') && git clone https://github.com/enimax-anime/enimax && cd enimax && git checkout $BRANCH"
       env: 
         BRANCH:  ${{steps.branch-name.outputs.current_branch}}
 
