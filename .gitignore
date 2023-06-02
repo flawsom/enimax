@@ -7,7 +7,6 @@ test/
 build.json
 build.sh
 copyConfig.sh
-Makefile
 
 enimax-chrome-extension/
 test.js
