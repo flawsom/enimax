@@ -70,4 +70,9 @@ jobs:
         BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
         MESSAGE: ${{ github.event.head_commit.message }}
 
+    - if: steps.branch-name.outputs.current_branch === "test"
+      name: Releasing if it's the main branch
+      run: npm install octokit && node ./enimax/helper/release.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
