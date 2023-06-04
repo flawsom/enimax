@@ -23,6 +23,7 @@ async function ini(token, channelID, branch) {
         });
 
     } catch (err) {
+        console.error(err);
         console.error("Something went wrong");
     } finally {
         process.exit();
