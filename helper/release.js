@@ -17,8 +17,8 @@ const version = JSON.parse(fs.readFileSync(path.join(__dirname, "../version.json
         tag_name: version,
         target_commitish: `v${version}`,
         name: version,
-        body: "",
-        draft: true,
+        body: fs.readFileSync(path.join(__dirname, "./releasenotes.txt")),
+        draft: false,
         prerelease: false,
         generate_release_notes: true,
         headers: {
