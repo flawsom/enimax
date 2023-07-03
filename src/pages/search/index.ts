@@ -24,11 +24,6 @@ const sourceCardsDOM = document.getElementById("sourceCards");
 let engineID = queries.get("engine") || parseInt(localStorage.getItem("currentEngine"));
 let currentCatIndex = 0;
 
-// new menuPull(conElem, () => {
-//     window.parent.postMessage({ "action": 500, data: "pages/homepage/index.html" }, "*");
-//     conElem.style.transform = `translateX(100px)`;
-// }, document.getElementById("mainConSearch"));
-
 function sendNoti() {
     return document.createElement("div");
 }

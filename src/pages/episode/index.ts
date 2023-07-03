@@ -289,7 +289,6 @@ function ini() {
             }
 
             let scrollToDOM;
-            var a = document.getElementsByClassName("card_con");
             document.getElementById("updateImage").style.display = "inline-block";
             if (!config.chrome) {
                 document.getElementById("downloadAll").style.display = "inline-block";
