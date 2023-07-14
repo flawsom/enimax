@@ -38,7 +38,7 @@ jobs:
   
     - name: Update Docker Image Cache if cache miss
       if: steps.cache-docker-enimax.outputs.cache-hit != 'true'
-      run: docker pull enimaxanime/anime && mkdir -p ci/cache/docker/enimax && docker image save enimaxanime/anime --output ./ci/cache/docker/enimax/enimax.tar
+      run: docker pull enimaxanime/anime && mkdir -p ci/cache/docker/enimax && docker image save enimaxanime/anime | pigz --fast > ./ci/cache/docker/enimax/enimax.tar
       
     - name: Use Docker Image Cache if cache hit
       if: steps.cache-docker-enimax.outputs.cache-hit == 'true'
