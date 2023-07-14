@@ -104,3 +104,4 @@ jobs:
         BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
         MESSAGE: ${{ github.event.head_commit.message }}
         RELEASE: true
+        
