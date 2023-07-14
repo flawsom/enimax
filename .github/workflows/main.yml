@@ -77,13 +77,13 @@ jobs:
       with:
           node-version: 18
 
-    - name: Uploading the APK to discord
-      run: npm install dotenv discord.js@14.11.0 && node ./enimax/helper/uploader.js
-      env:
-        TOKEN: ${{ secrets.TOKEN }}
-        CHANNELID: ${{ secrets.CHANNELID }}
-        BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
-        MESSAGE: ${{ github.event.head_commit.message }}
+    # - name: Uploading the APK to discord
+    #   run: npm install dotenv discord.js@14.11.0 && node ./enimax/helper/uploader.js
+    #   env:
+    #     TOKEN: ${{ secrets.TOKEN }}
+    #     CHANNELID: ${{ secrets.CHANNELID }}
+    #     BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
+    #     MESSAGE: ${{ github.event.head_commit.message }}
 
     - name: Checking if this is a beta release
       run: | 
@@ -92,16 +92,16 @@ jobs:
         CHANNELID:  ${{ secrets.BETACHANNEL }}
         TOKEN: ${{ secrets.TOKEN }}
 
-    - if: steps.branch-name.outputs.current_branch == 'main'
-      name: Releasing if it's the main branch
-      run: | 
-        npm install octokit && node ./enimax/helper/release.js
-        node ./enimax/helper/uploader.js
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        TOKEN: ${{ secrets.TOKEN }}
-        CHANNELID: ${{ secrets.RELEASECHANNEL }}
-        BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
-        MESSAGE: ${{ github.event.head_commit.message }}
-        RELEASE: true
+    # - if: steps.branch-name.outputs.current_branch == 'main'
+    #   name: Releasing if it's the main branch
+    #   run: | 
+    #     npm install octokit && node ./enimax/helper/release.js
+    #     node ./enimax/helper/uploader.js
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #     TOKEN: ${{ secrets.TOKEN }}
+    #     CHANNELID: ${{ secrets.RELEASECHANNEL }}
+    #     BRANCH:  ${{ steps.branch-name.outputs.current_branch }}
+    #     MESSAGE: ${{ github.event.head_commit.message }}
+    #     RELEASE: true
         
